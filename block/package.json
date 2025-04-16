@@ -1,6 +1,6 @@
 {
   "name": "@platforma-open/milaboratories.repertoire-distance",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "scripts": {
     "pretty": "prettier --write \"./**/*.{js,jsx,mjs,cjs,ts,tsx,json,vue}\"",
     "build": "rm -rf ./block-pack && block-tools pack",
@@ -32,7 +32,11 @@
       "description": "Calculates an all-versus-all pairwise distance using a set of repertoire similarity measures.",
       "longDescription": "file:../docs/description.md",
       "changelog": "file:../CHANGELOG.md",
-      "tags": ["repertoire", "distance", "similarity"],
+      "tags": [
+        "repertoire",
+        "distance",
+        "similarity"
+      ],
       "organization": {
         "name": "MiLaboratories Inc",
         "url": "https://milaboratories.com/",
