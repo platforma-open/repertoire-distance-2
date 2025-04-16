@@ -1,0 +1,219 @@
+// "hello world"
+wf := import("@platforma-sdk/workflow-tengo:workflow")
+exec := import("@platforma-sdk/workflow-tengo:exec")
+assets:= import("@platforma-sdk/workflow-tengo:assets")
+xsv := import("@platforma-sdk/workflow-tengo:pframes.xsv")
+ll := import("@platforma-sdk/workflow-tengo:ll")
+pframes := import("@platforma-sdk/workflow-tengo:pframes")
+canonical := import("@platforma-sdk/workflow-tengo:canonical")
+pSpec := import("@platforma-sdk/workflow-tengo:pframes.spec")
+self := import("@platforma-sdk/workflow-tengo:tpl")
+maps := import("@platforma-sdk/workflow-tengo:maps")
+json := import("json")
+
+distanceSw := assets.importSoftware("@platforma-open/milaboratories.repertoire-distance.software:main")
+
+self.awaitState("columnBundle", { wildcard: "*" }, "data", "InputsLocked")
+self.awaitState("columnBundle", { wildcard: "*" }, "spec", "ResourceReady")
+
+getLabel := func(mt) {
+	if mt == "F1" {
+		return "F1 Score"
+	} else if mt == "F2" {
+		return "F2 Score"
+	} else if mt == "jaccard" {
+		return "Jaccard Index"
+	} else if mt == "D" {
+		return "D Score"
+	} else if mt == "correlation" {
+		return "Correlation"
+	}
+	return mt;
+}
+
+getSpecs := func(abundanceSpec, metrics, blockId) {
+	columns := []
+
+	for index, metric in metrics {
+		spec := {
+			column: metric.type + "_" + metric.intersection,
+			spec: {
+					name: "pl7.app/overlap/" + metric.type,
+					valueType: "Double",
+					domain: maps.merge(
+						abundanceSpec.domain,
+						{
+							"pl7.app/overlap/type": metric.type
+						}
+					),
+					annotations: {
+						"pl7.app/label": getLabel(metric.type) + " " + metric.intersection
+					}
+				}
+		}
+		columns = append(columns, spec)
+	}
+
+	return {
+		axes: [{
+			column: "sample1",
+			spec: {
+				name: "pl7.app/sampleId",
+				type: "String",
+				domain: maps.merge(
+					abundanceSpec.axesSpec[0].domain,
+					{
+						"pl7.app/overlap" : "left"
+					}
+				),
+				annotations: {
+					"pl7.app/label": "Sample 1",
+					"pl7.app/overlap" : "left"
+					}
+				}
+			},
+			{
+				column: "sample2",
+				spec: {
+					name: "pl7.app/sampleId",
+					type: "String",
+					domain: maps.merge(
+						abundanceSpec.axesSpec[0].domain,
+						{
+							"pl7.app/overlap" : "right"
+						}
+					),
+					annotations: {
+						"pl7.app/label": "Sample 2",
+						"pl7.app/overlap" : "right"
+					}
+				}
+			}
+		], 
+		columns: columns,
+		storageFormat: "Binary",
+		partitionKeyLength: 0
+	}
+}
+
+wf.prepare(func(args) {
+	bundleBuilder := wf.createPBundleBuilder()
+	bundleBuilder.addAnchor("main", args.abundanceRef)
+	for alphabet in ["aminoacid", "nucleotide"] {
+		bundleBuilder.addById({
+			name: "pl7.app/vdj/sequence",
+			domain: {
+				"pl7.app/alphabet": alphabet,
+				"pl7.app/vdj/feature": "CDR3"  // CDR1, CDR2, CDR3, or FR1
+			},
+			axes: [{anchor: "main", idx: 1}]
+		});
+	}
+	
+	for gene in ["VGene", "JGene"] {
+		bundleBuilder.addById({
+			name: "pl7.app/vdj/geneHit",
+			domain: {
+				"pl7.app/vdj/reference": gene
+			},
+			axes: [{anchor: "main", idx: 1}]
+		});
+	}
+	return  { 
+		columns: bundleBuilder.build()
+	}
+})
+
+wf.body(func(args) {
+	blockId := wf.blockId().getDataAsJson()
+
+	columns := args.columns
+	abundanceSpec := columns.getSpec(args.abundanceRef)
+	table := columns.xsvTableBuilder()
+
+	table.setAxisHeader("pl7.app/sampleId", "sampleId")
+	table.add(args.abundanceRef, {header: "count"})
+
+	for alphabet in ["aminoacid", "nucleotide"] {
+		table.add({
+			name: "pl7.app/vdj/sequence",
+			domain: {
+				"pl7.app/alphabet": alphabet,
+				"pl7.app/vdj/feature": "CDR3" 
+			},
+			axes: [{anchor: "main", idx: 1}]
+		}, {header: alphabet == "aminoacid" ? "CDR3 aa" : "CDR3 nt"})
+	}
+
+	for gene in ["VGene", "JGene"] {
+		table.add({
+			name: "pl7.app/vdj/geneHit",
+			domain: {
+				"pl7.app/vdj/reference": gene
+			},
+			axes: [{anchor: "main", idx: 1}]
+		}, {header: gene})
+	}
+	
+	tsv := table.build("tsv")
+
+	ll.print("__THE_LOG__"+args.metrics)
+
+	runDistance := exec.builder().
+		software(distanceSw).
+		arg("-i").arg("input.tsv").
+		arg("-o1").arg("full_result.tsv").
+		arg("-o2").arg("unique_result.tsv").
+		writeFile("metrics.json", json.encode(args.metrics)).
+		arg("-j").arg("metrics.json").
+		addFile("input.tsv", tsv).
+		saveFile("full_result.tsv").
+		saveFile("unique_result.tsv").
+		run()
+
+	distanceResult := runDistance.getFile("full_result.tsv")
+	distanceResultUnique := runDistance.getFile("unique_result.tsv")
+	result := xsv.importFile(
+		distanceResult,
+		"tsv",
+		getSpecs(abundanceSpec, args.metrics, blockId),
+		{ splitDataAndSpec: true }
+	)
+	resultUnique := xsv.importFile(
+		distanceResultUnique,
+		"tsv",
+		getSpecs(abundanceSpec, args.metrics, blockId),
+		{ splitDataAndSpec: true }
+	)
+
+	//trace := pSpec.makeTrace(
+	//	abundanceSpec,
+	//	{
+	//		type: "milaboratories.differential-repertoire-diversity",
+	//		id: blockId,
+	//		importance: 30, 
+	//		label: "Repertoire Diversity"
+	//	}
+	//)
+
+	pf := pframes.pFrameBuilder()
+	for id, v in result {
+		pf.add(id, v.spec, v.data)
+	}
+	pf = pf.build()
+
+	pfUnique := pframes.pFrameBuilder()	
+	for id, v in resultUnique {
+		pfUnique.add(id, v.spec, v.data)
+	}
+	pfUnique = pfUnique.build()
+
+	return {
+		outputs: {
+			pf: pframes.exportFrame(pf),
+			pfUnique: pframes.exportFrame(pfUnique)
+		},
+		exports: {}
+	}
+})
+
