@@ -1,5 +1,16 @@
 # @platforma-open/milaboratories.repertoire-distance.workflow
 
+## 1.1.0
+
+### Minor Changes
+
+- 0e02fc6: block renaming
+
+### Patch Changes
+
+- Updated dependencies [0e02fc6]
+  - @platforma-open/milaboratories.repertoire-distance-2.software@1.1.0
+
 ## 2.0.0
 
 ### Major Changes
