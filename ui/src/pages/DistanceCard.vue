@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Metric } from '@platforma-open/milaboratories.repertoire-distance.model';
+import type { Metric } from '@platforma-open/milaboratories.repertoire-distance-2.model';
 import type { ListOption } from '@platforma-sdk/ui-vue';
 import { PlDropdown } from '@platforma-sdk/ui-vue';
 import './metrics-manager.scss';

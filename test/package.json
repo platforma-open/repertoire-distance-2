@@ -1,5 +1,5 @@
 {
-  "name": "@platforma-open/milaboratories.repertoire-distance.test",
+  "name": "@platforma-open/milaboratories.repertoire-distance-2.test",
   "private": true,
   "version": "2.0.0",
   "description": "Block tests",
@@ -10,7 +10,7 @@
   "files": [],
   "keywords": [],
   "dependencies": {
-    "this-block": "workspace:@platforma-open/milaboratories.repertoire-distance@*"
+    "this-block": "workspace:@platforma-open/milaboratories.repertoire-distance-2@*"
   },
   "devDependencies": {
     "@platforma-sdk/test": "catalog:",

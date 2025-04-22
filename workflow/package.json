@@ -1,6 +1,6 @@
 {
-  "name": "@platforma-open/milaboratories.repertoire-distance.workflow",
-  "version": "2.0.0",
+  "name": "@platforma-open/milaboratories.repertoire-distance-2.workflow",
+  "version": "1.0.0",
   "type": "module",
   "description": "Block Workflow",
   "scripts": {
@@ -9,7 +9,7 @@
     "format": "/usr/bin/env emacs --script ./format.el"
   },
   "dependencies": {
-    "@platforma-open/milaboratories.repertoire-distance.software": "workspace:*",
+    "@platforma-open/milaboratories.repertoire-distance-2.software": "workspace:*",
     "@platforma-sdk/workflow-tengo": "catalog:"
   },
   "devDependencies": {
