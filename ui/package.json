@@ -1,5 +1,5 @@
 {
-  "name": "@platforma-open/milaboratories.repertoire-distance.ui",
+  "name": "@platforma-open/milaboratories.repertoire-distance-2.ui",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@platforma-open/milaboratories.repertoire-distance.model": "workspace:*",
+    "@platforma-open/milaboratories.repertoire-distance-2.model": "workspace:*",
     "@milaboratories/graph-maker": "catalog:",
     "@platforma-sdk/ui-vue": "catalog:",
     "@platforma-sdk/model": "catalog:",

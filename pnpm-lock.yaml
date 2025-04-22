@@ -86,13 +86,13 @@ importers:
 
   block:
     dependencies:
-      '@platforma-open/milaboratories.repertoire-distance.model':
+      '@platforma-open/milaboratories.repertoire-distance-2.model':
         specifier: workspace:*
         version: link:../model
-      '@platforma-open/milaboratories.repertoire-distance.ui':
+      '@platforma-open/milaboratories.repertoire-distance-2.ui':
         specifier: workspace:*
         version: link:../ui
-      '@platforma-open/milaboratories.repertoire-distance.workflow':
+      '@platforma-open/milaboratories.repertoire-distance-2.workflow':
         specifier: workspace:*
         version: link:../workflow
       '@platforma-sdk/model':
@@ -141,7 +141,7 @@ importers:
   test:
     dependencies:
       this-block:
-        specifier: workspace:@platforma-open/milaboratories.repertoire-distance@*
+        specifier: workspace:@platforma-open/milaboratories.repertoire-distance-2@*
         version: link:../block
     devDependencies:
       '@platforma-sdk/test':
@@ -159,7 +159,7 @@ importers:
       '@milaboratories/graph-maker':
         specifier: 'catalog:'
         version: 1.1.74(d3-dispatch@3.0.1)(d3-path@3.1.0)(d3-scale-chromatic@3.1.0)(typescript@5.5.4)
-      '@platforma-open/milaboratories.repertoire-distance.model':
+      '@platforma-open/milaboratories.repertoire-distance-2.model':
         specifier: workspace:*
         version: link:../model
       '@platforma-sdk/model':
@@ -193,7 +193,7 @@ importers:
 
   workflow:
     dependencies:
-      '@platforma-open/milaboratories.repertoire-distance.software':
+      '@platforma-open/milaboratories.repertoire-distance-2.software':
         specifier: workspace:*
         version: link:../software
       '@platforma-sdk/workflow-tengo':
