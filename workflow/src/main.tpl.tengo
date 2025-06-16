@@ -11,7 +11,7 @@ self := import("@platforma-sdk/workflow-tengo:tpl")
 maps := import("@platforma-sdk/workflow-tengo:maps")
 json := import("json")
 
-distanceSw := assets.importSoftware("@platforma-open/milaboratories.repertoire-distance.software:main")
+distanceSw := assets.importSoftware("@platforma-open/milaboratories.repertoire-distance-2.software:main")
 
 self.awaitState("columnBundle", { wildcard: "*" }, "data", "InputsLocked")
 self.awaitState("columnBundle", { wildcard: "*" }, "spec", "ResourceReady")

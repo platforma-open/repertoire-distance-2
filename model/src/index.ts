@@ -88,9 +88,9 @@ export const model = BlockModel.create()
   })
 
   .withUiState<UiState>({
-    blockTitle: 'Repertoire Distance',
+    blockTitle: 'Repertoire Distance 2',
     graphState: {
-      title: 'Repertoire Distance',
+      title: 'Repertoire Distance 2',
       template: 'heatmap',
       currentTab: null,
     },
