@@ -43,6 +43,10 @@ const addMetric = () => {
     args.metrics.push({
       type: undefined,
       intersection: 'CDR3ntVJ',
+      downsampling: {
+        type: 'none',
+        valueChooser: 'auto',
+      },
     });
     openState[index] = true;
   });

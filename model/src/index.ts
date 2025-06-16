@@ -10,6 +10,11 @@ export type IntersectionType = 'CDR3ntVJ' | 'CDR3aaVJ' | 'CDR3nt' | 'CDR3aa';
 export type Metric = {
   type: DistanceType | undefined;
   intersection: IntersectionType | undefined;
+  downsampling: {
+    type?: 'none' | 'top' | 'cumtop' | 'hypergeometric';
+    valueChooser?: 'min' | 'fixed' | 'max' | 'auto';
+    n?: number;
+  };
 };
 
 export type BlockArgs = {
@@ -34,26 +39,50 @@ export const model = BlockModel.create()
       {
         type: 'F1',
         intersection: 'CDR3ntVJ',
+        downsampling: {
+          type: 'hypergeometric',
+          valueChooser: 'auto',
+        },
       },
       {
         type: 'F2',
         intersection: 'CDR3ntVJ',
+        downsampling: {
+          type: 'hypergeometric',
+          valueChooser: 'auto',
+        },
       },
       {
         type: 'D',
         intersection: 'CDR3ntVJ',
+        downsampling: {
+          type: 'hypergeometric',
+          valueChooser: 'auto',
+        },
       },
       {
         type: 'sharedClonotypes',
         intersection: 'CDR3ntVJ',
+        downsampling: {
+          type: 'hypergeometric',
+          valueChooser: 'auto',
+        },
       },
       {
         type: 'correlation',
         intersection: 'CDR3ntVJ',
+        downsampling: {
+          type: 'hypergeometric',
+          valueChooser: 'auto',
+        },
       },
       {
         type: 'jaccard',
         intersection: 'CDR3ntVJ',
+        downsampling: {
+          type: 'hypergeometric',
+          valueChooser: 'auto',
+        },
       },
     ],
   })

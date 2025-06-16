@@ -43,7 +43,8 @@ getSpecs := func(abundanceSpec, metrics, blockId) {
 					domain: maps.merge(
 						abundanceSpec.domain,
 						{
-							"pl7.app/overlap/type": metric.type
+							"pl7.app/overlap/type": metric.type,
+							"pl7.app/downsampling": canonical.encode(metric.downsampling)
 						}
 					),
 					annotations: {
