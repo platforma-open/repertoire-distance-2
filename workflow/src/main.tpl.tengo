@@ -154,13 +154,16 @@ wf.body(func(args) {
 			axes: [{anchor: "main", idx: 1}]
 		}, {header: gene})
 	}
-	
+	table.mem("16GiB")
+	table.cpu(1)
 	tsv := table.build("tsv")
 
 	ll.print("__THE_LOG__"+args.metrics)
 
 	runDistance := exec.builder().
 		software(distanceSw).
+		mem("32GiB").
+		cpu(1).
 		arg("-i").arg("input.tsv").
 		arg("-o1").arg("full_result.tsv").
 		arg("-o2").arg("unique_result.tsv").
@@ -177,13 +180,13 @@ wf.body(func(args) {
 		distanceResult,
 		"tsv",
 		getSpecs(abundanceSpec, args.metrics, blockId),
-		{ splitDataAndSpec: true }
+		{ splitDataAndSpec: true, cpu: 1, mem: "16GiB"}
 	)
 	resultUnique := xsv.importFile(
 		distanceResultUnique,
 		"tsv",
 		getSpecs(abundanceSpec, args.metrics, blockId),
-		{ splitDataAndSpec: true }
+		{ splitDataAndSpec: true, cpu: 1, mem: "16GiB"}
 	)
 
 	//trace := pSpec.makeTrace(
