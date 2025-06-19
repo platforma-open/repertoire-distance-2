@@ -81,7 +81,8 @@ export const model = BlockModel.create()
     ctx.resultPool.getOptions((c) =>
       isPColumnSpec(c) && isNumericType(c)
       && c.annotations?.['pl7.app/isAbundance'] === 'true'
-      && c.annotations?.['pl7.app/abundance/normalized'] === 'false',
+      && c.annotations?.['pl7.app/abundance/normalized'] === 'false'
+      && c.annotations?.['pl7.app/abundance/isPrimary'] === 'true',
     ))
 
   .output('pt', (ctx) => {
