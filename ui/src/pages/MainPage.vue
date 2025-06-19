@@ -1,16 +1,23 @@
 <script setup lang="ts">
-import type { PlDataTableSettings } from '@platforma-sdk/ui-vue';
-import { PlAgDataTable, PlAgDataTableToolsPanel, PlBlockPage, PlBtnGhost, PlEditableTitle, PlMaskIcon24 } from '@platforma-sdk/ui-vue';
+import type { PlAgDataTableSettings } from '@platforma-sdk/ui-vue';
+import { PlAgDataTableV2, PlAgDataTableToolsPanel, PlBlockPage, PlBtnGhost, PlEditableTitle, PlMaskIcon24 } from '@platforma-sdk/ui-vue';
 import { computed, ref } from 'vue';
 import { useApp } from '../app';
 import SettingsModal from './Settings.vue';
 
 const app = useApp();
 
-const tableSettings = computed<PlDataTableSettings>(() => ({
-  sourceType: 'ptable',
-  pTable: app.model.outputs.pt,
-}));
+const tableSettings = computed<PlAgDataTableSettings>(() => {
+  const pTable = app.model.outputs.pt;
+  if (pTable === undefined && !app.model.outputs.isRunning) {
+    // special case: when block is not yet started at all (no table calculated)
+    return undefined;
+  }
+  return {
+    sourceType: 'ptable',
+    model: pTable,
+  };
+});
 
 const settingsAreShown = ref(app.model.args.abundanceRef !== undefined);
 const showSettings = () => {
@@ -34,7 +41,7 @@ const showSettings = () => {
         </template>
       </PlBtnGhost>
     </template>
-    <PlAgDataTable v-model="app.model.ui.tableState" :settings="tableSettings" show-columns-panel show-export-button />
+    <PlAgDataTableV2 v-model="app.model.ui.tableState" :settings="tableSettings" show-columns-panel show-export-button />
   </PlBlockPage>
 
   <SettingsModal v-model="settingsAreShown" />
