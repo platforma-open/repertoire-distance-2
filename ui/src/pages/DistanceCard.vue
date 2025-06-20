@@ -19,7 +19,7 @@ const downsamplingOptions: ListOption<string | undefined>[] = [
   { label: 'Random Sampling', value: 'hypergeometric' },
 ];
 
-const props = defineModel<Metric>({ 
+const props = defineModel<Metric>({
   required: true,
   default: {
     type: undefined,
@@ -28,8 +28,9 @@ const props = defineModel<Metric>({
       type: 'none',
       valueChooser: 'auto',
     },
-  }
+  },
 });
+
 </script>
 
 <template>

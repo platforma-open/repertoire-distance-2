@@ -193,14 +193,24 @@ def main():
 
     # Apply downsampling for each metric configuration
     df_downsampled = downsample_df(df, metric_configs[0]['downsampling'])  # Use first metric's downsampling config
-    full_result_df = compute_metrics_wide(df_downsampled, metric_configs)
+    wide_result_df = compute_metrics_wide(df_downsampled, metric_configs)
 
-    # Save full version
+    # Convert wide format to long format for full results
+    value_columns = [f"{m['type']}_{m['intersection']}" for m in metric_configs]
+    full_result_df = pd.melt(
+        wide_result_df,
+        id_vars=['sample1', 'sample2'],
+        value_vars=value_columns,
+        var_name='metric',
+        value_name='value'
+    )
+
+    # Save full version (long format)
     full_result_df.to_csv(args.output_full, index=False, sep='\t')
 
-    # Deduplicate: keep only (sample1 <= sample2)
-    unique_result_df = full_result_df[
-        full_result_df['sample1'] <= full_result_df['sample2']
+    # Keep only (sample1 <= sample2) in wide format
+    unique_result_df = wide_result_df[
+        wide_result_df['sample1'] <= wide_result_df['sample2']
     ].copy()
     unique_result_df.to_csv(args.output_unique, index=False, sep='\t')
 

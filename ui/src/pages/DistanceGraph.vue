@@ -20,31 +20,30 @@ function getDefaultOptions(heatmapPCols?: PColumnIdAndSpec[]) {
   const defaults: GraphMakerProps['defaultOptions'] = [
     {
       inputName: 'x',
-      selectedSource: heatmapPCols[getIndex('pl7.app/overlap/F1', heatmapPCols)].spec.axesSpec[0],
+      selectedSource: heatmapPCols[getIndex('pl7.app/vdj/overlap', heatmapPCols)].spec.axesSpec[0],
     },
     {
       inputName: 'y',
-      selectedSource: heatmapPCols[getIndex('pl7.app/overlap/F1', heatmapPCols)].spec.axesSpec[1],
+      selectedSource: heatmapPCols[getIndex('pl7.app/vdj/overlap', heatmapPCols)].spec.axesSpec[1],
     },
     {
       inputName: 'value',
-      selectedSource: heatmapPCols[getIndex('pl7.app/overlap/F1', heatmapPCols)].spec,
+      selectedSource: heatmapPCols[getIndex('pl7.app/vdj/overlap', heatmapPCols)].spec,
     },
     {
       inputName: 'tabBy',
-      selectedSource: {
-        kind: 'PColumn',
-        valueType: 'Double',
-        name: 'pl7.app/overlap/F1',
-        axesSpec: [],
-      },
+      selectedSource: heatmapPCols[getIndex('pl7.app/vdj/overlap', heatmapPCols)].spec.axesSpec[2],
     },
   ];
 
   return defaults;
 }
 
-const defaultOptions = ref(getDefaultOptions(app.model.outputs.heatmapPCols));
+const heatmapPCols = app.model.outputs.heatmapPCols;
+
+const defaultOptions = ref<GraphMakerProps['defaultOptions']>(
+  getDefaultOptions(heatmapPCols),
+);
 </script>
 
 <template>
