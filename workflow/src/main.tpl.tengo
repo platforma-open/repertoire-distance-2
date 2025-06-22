@@ -125,18 +125,29 @@ wf.body(func(args) {
 	sequences := columns.getColumns("sequences")
 	genes := columns.getColumns("genes")
 	abundanceSpec := columns.getSpec(args.abundanceRef)
+	isSingleCell := abundanceSpec.axesSpec[1].name == "pl7.app/vdj/scClonotypeKey"
 	table := pframes.tsvFileBuilder()
 
 	table.setAxisHeader("pl7.app/sampleId", "sampleId")
 	table.add(columns.getColumn(args.abundanceRef), {header: "count"})
 
 	for seqColumn in sequences {
-		table.add(seqColumn, {header: seqColumn.spec.annotations["pl7.app/label"]})
+		if isSingleCell {
+			chain := seqColumn.spec.domain["pl7.app/vdj/scClonotypeChain"]
+			table.add(seqColumn, {header: seqColumn.spec.annotations["pl7.app/label"] + " " + chain})
+		} else {
+			table.add(seqColumn, {header: seqColumn.spec.annotations["pl7.app/label"]})
+		}
 	}
 
 	for geneColumn in genes {
 		if geneColumn.spec.domain["pl7.app/vdj/reference"] == "VGene" || geneColumn.spec.domain["pl7.app/vdj/reference"] == "JGene" {
-			table.add(geneColumn, {header: geneColumn.spec.domain["pl7.app/vdj/reference"]})
+			if isSingleCell {
+				chain := geneColumn.spec.domain["pl7.app/vdj/scClonotypeChain"]
+				table.add(geneColumn, {header: geneColumn.spec.domain["pl7.app/vdj/reference"] + " " + chain})
+			} else {
+				table.add(geneColumn, {header: geneColumn.spec.domain["pl7.app/vdj/reference"]})
+			}
 		}
 	}
 	
