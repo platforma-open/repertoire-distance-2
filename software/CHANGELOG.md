@@ -1,5 +1,11 @@
 # @platforma-open/milaboratories.repertoire-distance.software
 
+## 1.1.1
+
+### Patch Changes
+
+- 14bde32: Migration to new sdk, updating dependencies
+
 ## 1.1.0
 
 ### Minor Changes
