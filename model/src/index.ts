@@ -1,6 +1,6 @@
 import type { GraphMakerState } from '@milaboratories/graph-maker';
-import type { InferOutputsType, PColumnIdAndSpec, PColumnSpec, PlDataTableState, PlRef } from '@platforma-sdk/model';
-import { BlockModel, createPFrameForGraphs, createPlDataTableV2, isPColumnSpec } from '@platforma-sdk/model';
+import type { InferOutputsType, PColumnIdAndSpec, PlDataTableState, PlRef } from '@platforma-sdk/model';
+import { BlockModel, createPFrameForGraphs, createPlDataTableV2 } from '@platforma-sdk/model';
 
 export type DistanceType = 'F1' | 'F2' | 'D' |
   'sharedClonotypes' | 'correlation' | 'jaccard';
@@ -22,10 +22,6 @@ export type UiState = {
   tableState?: PlDataTableState;
   graphState: GraphMakerState;
 };
-
-function isNumericType(c: PColumnSpec): boolean {
-  return c.valueType === 'Double' || c.valueType === 'Int' || c.valueType === 'Float' || c.valueType === 'Long';
-}
 
 export const model = BlockModel.create()
 
@@ -78,20 +74,47 @@ export const model = BlockModel.create()
   .argsValid((ctx) => ctx.args.abundanceRef !== undefined)
 
   .output('abundanceOptions', (ctx) =>
-    ctx.resultPool.getOptions((c) =>
-      isPColumnSpec(c) && isNumericType(c)
-      && c.annotations?.['pl7.app/isAbundance'] === 'true'
-      && c.annotations?.['pl7.app/abundance/normalized'] === 'false'
-      && c.annotations?.['pl7.app/abundance/isPrimary'] === 'true',
-    ))
+    ctx.resultPool.getOptions([{
+      axes: [
+        { name: 'pl7.app/sampleId' },
+        { },
+      ],
+      annotations: {
+        'pl7.app/isAbundance': 'true',
+        'pl7.app/abundance/normalized': 'false',
+        'pl7.app/abundance/isPrimary': 'true',
+      },
+    },
+    ], { includeNativeLabel: true }),
+  )
 
   .output('pt', (ctx) => {
     const pCols = ctx.outputs?.resolve('pfUnique')?.getPColumns();
     if (pCols === undefined) {
       return undefined;
     }
-
-    return createPlDataTableV2(ctx, pCols, (_) => true, ctx.uiState?.tableState);
+    const inputOptions = ctx.resultPool.getOptions([
+      {
+        axes: [
+          { name: 'pl7.app/sampleId' },
+          {},
+        ],
+        annotations: {
+          'pl7.app/isAbundance': 'true',
+          'pl7.app/abundance/normalized': 'false',
+          'pl7.app/abundance/isPrimary': 'true',
+        },
+      },
+    ]);
+    const allowedSampleIds = inputOptions.map((opt) => opt.ref?.name || opt.ref);
+    const filteredPCols = pCols.filter((col) => allowedSampleIds.includes(col.id));
+    return createPlDataTableV2(ctx, filteredPCols, ctx.uiState?.tableState ?? {
+      gridState: {},
+      pTableParams: {
+        sorting: [],
+        filters: [],
+      },
+    });
   })
 
   .output('pf', (ctx) => {

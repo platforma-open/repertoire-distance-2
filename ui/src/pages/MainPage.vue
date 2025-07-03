@@ -1,29 +1,9 @@
 <script setup lang="ts">
-import type { PlAgDataTableSettings } from '@platforma-sdk/ui-vue';
+import type { PlDataTableSettingsV2 } from '@platforma-sdk/ui-vue';
 import { PlAgDataTableV2, PlAgDataTableToolsPanel, PlBlockPage, PlBtnGhost, PlEditableTitle, PlMaskIcon24 } from '@platforma-sdk/ui-vue';
 import { computed, ref } from 'vue';
 import { useApp } from '../app';
 import SettingsModal from './Settings.vue';
-
-const app = useApp();
-
-const tableSettings = computed<PlAgDataTableSettings>(() => {
-  const pTable = app.model.outputs.pt;
-  if (pTable === undefined && !app.model.outputs.isRunning) {
-    // special case: when block is not yet started at all (no table calculated)
-    return undefined;
-  }
-  return {
-    sourceType: 'ptable',
-    model: pTable,
-  };
-});
-
-const settingsAreShown = ref(app.model.args.abundanceRef !== undefined);
-const showSettings = () => {
-  settingsAreShown.value = true;
-};
-
 </script>
 
 <template>
@@ -41,7 +21,18 @@ const showSettings = () => {
         </template>
       </PlBtnGhost>
     </template>
-    <PlAgDataTableV2 v-model="app.model.ui.tableState" :settings="tableSettings" show-columns-panel show-export-button />
+    <div v-if="app.model.outputs.pt && !app.model.outputs.isRunning" style="flex: 1;">
+      <PlAgDataTableV2
+        v-model="app.model.ui.tableState"
+        :settings="tableSettings as PlDataTableSettingsV2"
+        show-columns-panel
+        show-export-button
+      />
+    </div>
+    <div v-else style="flex: 1; display: flex; align-items: center; justify-content: center; min-height: 200px;">
+      <span v-if="app.model.outputs.isRunning">Processing... Please wait.</span>
+      <span v-else>Press Run to start analysis.</span>
+    </div>
   </PlBlockPage>
 
   <SettingsModal v-model="settingsAreShown" />

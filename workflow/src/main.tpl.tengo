@@ -133,8 +133,14 @@ wf.body(func(args) {
 
 	for seqColumn in sequences {
 		if isSingleCell {
-			chain := seqColumn.spec.domain["pl7.app/vdj/scClonotypeChain"]
-			table.add(seqColumn, {header: seqColumn.spec.annotations["pl7.app/label"] + " " + chain})
+			if seqColumn.spec.domain["pl7.app/vdj/scClonotypeChain/index"] == "primary" {
+				chain := seqColumn.spec.domain["pl7.app/vdj/scClonotypeChain"]
+				alphabet := seqColumn.spec.domain["pl7.app/alphabet"]
+				alphabetShort := (alphabet == "aminoacid") ? "aa" : "nt"
+				table.add(seqColumn, {header: "CDR3 " + alphabetShort + " " + chain})
+			} else {
+				table.add(seqColumn, {header: seqColumn.spec.annotations["pl7.app/label"]})
+			}
 		} else {
 			table.add(seqColumn, {header: seqColumn.spec.annotations["pl7.app/label"]})
 		}
@@ -143,17 +149,18 @@ wf.body(func(args) {
 	for geneColumn in genes {
 		if geneColumn.spec.domain["pl7.app/vdj/reference"] == "VGene" || geneColumn.spec.domain["pl7.app/vdj/reference"] == "JGene" {
 			if isSingleCell {
-				chain := geneColumn.spec.domain["pl7.app/vdj/scClonotypeChain"]
-				table.add(geneColumn, {header: geneColumn.spec.domain["pl7.app/vdj/reference"] + " " + chain})
+				if geneColumn.spec.domain["pl7.app/vdj/scClonotypeChain/index"] == "primary" {
+					ll.print("__THE_LOG__"+geneColumn.spec)
+					chain := geneColumn.spec.domain["pl7.app/vdj/scClonotypeChain"]
+					table.add(columns.getColumn(geneColumn.key), {header: geneColumn.spec.domain["pl7.app/vdj/reference"] + " " + chain})
+				}
 			} else {
-				table.add(geneColumn, {header: geneColumn.spec.domain["pl7.app/vdj/reference"]})
+				table.add(geneColumn, {header: geneColumn.spec.annotations["pl7.app/label"]})
 			}
 		}
 	}
 	
 	tsv := table.build()
-
-	ll.print("__THE_LOG__"+args.metrics)
 
 	runDistance := exec.builder().
 		software(distanceSw).
