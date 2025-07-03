@@ -1,5 +1,11 @@
 # @platforma-open/milaboratories.repertoire-distance
 
+## 1.2.0
+
+### Minor Changes
+
+- bfdc30b: allow prepare venv on Windows
+
 ## 1.1.0
 
 ### Minor Changes
