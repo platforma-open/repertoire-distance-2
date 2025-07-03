@@ -167,26 +167,20 @@ getUniqueSpecs := func(abundanceSpec, metrics, blockId) {
 wf.prepare(func(args) {
 	bundleBuilder := wf.createPBundleBuilder()
 	bundleBuilder.addAnchor("main", args.abundanceRef)
-	for alphabet in ["aminoacid", "nucleotide"] {
-		bundleBuilder.addById({
-			name: "pl7.app/vdj/sequence",
-			domain: {
-				"pl7.app/alphabet": alphabet,
-				"pl7.app/vdj/feature": "CDR3"  // CDR1, CDR2, CDR3, or FR1
-			},
-			axes: [{anchor: "main", idx: 1}]
-		});
-	}
+	bundleBuilder.addMulti({
+		name: "pl7.app/vdj/sequence",
+		domain: {
+			"pl7.app/vdj/feature": "CDR3"  // CDR1, CDR2, CDR3, or FR1
+		},
+		axes: [{anchor: "main", idx: 1}]
+	}, "sequences");
 	
-	for gene in ["VGene", "JGene"] {
-		bundleBuilder.addById({
-			name: "pl7.app/vdj/geneHit",
-			domain: {
-				"pl7.app/vdj/reference": gene
-			},
-			axes: [{anchor: "main", idx: 1}]
-		});
-	}
+	
+	bundleBuilder.addMulti({
+		name: "pl7.app/vdj/geneHit",
+		axes: [{anchor: "main", idx: 1}]
+	}, "genes");
+	
 	return  { 
 		columns: bundleBuilder.build()
 	}
@@ -196,34 +190,25 @@ wf.body(func(args) {
 	blockId := wf.blockId().getDataAsJson()
 
 	columns := args.columns
+	sequences := columns.getColumns("sequences")
+	genes := columns.getColumns("genes")
 	abundanceSpec := columns.getSpec(args.abundanceRef)
-	table := columns.xsvTableBuilder()
+	table := pframes.tsvFileBuilder()
 
 	table.setAxisHeader("pl7.app/sampleId", "sampleId")
-	table.add(args.abundanceRef, {header: "count"})
+	table.add(columns.getColumn(args.abundanceRef), {header: "count"})
 
-	for alphabet in ["aminoacid", "nucleotide"] {
-		table.add({
-			name: "pl7.app/vdj/sequence",
-			domain: {
-				"pl7.app/alphabet": alphabet,
-				"pl7.app/vdj/feature": "CDR3" 
-			},
-			axes: [{anchor: "main", idx: 1}]
-		}, {header: alphabet == "aminoacid" ? "CDR3 aa" : "CDR3 nt"})
+	for seqColumn in sequences {
+		table.add(seqColumn, {header: seqColumn.spec.annotations["pl7.app/label"]})
 	}
 
-	for gene in ["VGene", "JGene"] {
-		table.add({
-			name: "pl7.app/vdj/geneHit",
-			domain: {
-				"pl7.app/vdj/reference": gene
-			},
-			axes: [{anchor: "main", idx: 1}]
-		}, {header: gene})
+	for geneColumn in genes {
+		if geneColumn.spec.domain["pl7.app/vdj/reference"] == "VGene" || geneColumn.spec.domain["pl7.app/vdj/reference"] == "JGene" {
+			table.add(geneColumn, {header: geneColumn.spec.domain["pl7.app/vdj/reference"]})
+		}
 	}
 	
-	tsv := table.build("tsv")
+	tsv := table.build()
 
 	runDistance := exec.builder().
 		software(distanceSw).

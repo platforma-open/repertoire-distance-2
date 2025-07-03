@@ -1,6 +1,6 @@
 import type { GraphMakerState } from '@milaboratories/graph-maker';
-import type { InferOutputsType, PColumnIdAndSpec, PColumnSpec, PlDataTableState, PlRef, RenderCtx } from '@platforma-sdk/model';
-import { BlockModel, createPFrameForGraphs, createPlDataTable, isPColumnSpec, getUniquePartitionKeys } from '@platforma-sdk/model';
+import type { InferOutputsType, PColumnIdAndSpec, PColumnSpec, PlDataTableState, PlRef } from '@platforma-sdk/model';
+import { BlockModel, createPFrameForGraphs, createPlDataTableV2, isPColumnSpec } from '@platforma-sdk/model';
 
 export type DistanceType = 'F1' | 'F2' | 'D' |
   'sharedClonotypes' | 'correlation' | 'jaccard';
@@ -110,7 +110,8 @@ export const model = BlockModel.create()
     ctx.resultPool.getOptions((c) =>
       isPColumnSpec(c) && isNumericType(c)
       && c.annotations?.['pl7.app/isAbundance'] === 'true'
-      && c.annotations?.['pl7.app/abundance/normalized'] === 'false',
+      && c.annotations?.['pl7.app/abundance/normalized'] === 'false'
+      && c.annotations?.['pl7.app/abundance/isPrimary'] === 'true',
     ))
 
   .output('pt', (ctx) => {
@@ -119,7 +120,7 @@ export const model = BlockModel.create()
       return undefined;
     }
 
-    return createPlDataTable(ctx, pCols, ctx.uiState?.tableState);
+    return createPlDataTableV2(ctx, pCols, (_) => true, ctx.uiState?.tableState);
   })
 
   .output('pf', (ctx) => {
