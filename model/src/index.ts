@@ -1,79 +1,21 @@
-import type { GraphMakerState } from '@milaboratories/graph-maker';
-import type { InferOutputsType, PColumnIdAndSpec, PColumnSpec, PlDataTableState, PlRef } from '@platforma-sdk/model';
+import type { InferOutputsType, PColumnIdAndSpec, PColumnSpec } from '@platforma-sdk/model';
 import { BlockModel, createPFrameForGraphs, createPlDataTableV2, isPColumnSpec } from '@platforma-sdk/model';
+import type { BlockArgs, UiState } from './types';
+import { createDefaultUiState, convertMetricsUiToArgs } from './uiState';
 
-export type DistanceType = 'F1' | 'F2' | 'D' |
-  'sharedClonotypes' | 'correlation' | 'jaccard';
-
-export type IntersectionType = 'CDR3ntVJ' | 'CDR3aaVJ' | 'CDR3nt' | 'CDR3aa';
-
-export type Metric = {
-  type: DistanceType | undefined;
-  intersection: IntersectionType | undefined;
-};
-
-export type BlockArgs = {
-  abundanceRef?: PlRef;
-  metrics: Metric[];
-};
-
-export type UiState = {
-  blockTitle: string;
-  tableState?: PlDataTableState;
-  graphState: GraphMakerState;
-};
+export * from './types';
+export * from './uiState';
 
 function isNumericType(c: PColumnSpec): boolean {
   return c.valueType === 'Double' || c.valueType === 'Int' || c.valueType === 'Float' || c.valueType === 'Long';
 }
 
 export const model = BlockModel.create()
-
   .withArgs<BlockArgs>({
-    metrics: [
-      {
-        type: 'F1',
-        intersection: 'CDR3ntVJ',
-      },
-      {
-        type: 'F2',
-        intersection: 'CDR3ntVJ',
-      },
-      {
-        type: 'D',
-        intersection: 'CDR3ntVJ',
-      },
-      {
-        type: 'sharedClonotypes',
-        intersection: 'CDR3ntVJ',
-      },
-      {
-        type: 'correlation',
-        intersection: 'CDR3ntVJ',
-      },
-      {
-        type: 'jaccard',
-        intersection: 'CDR3ntVJ',
-      },
-    ],
+    metrics: convertMetricsUiToArgs(createDefaultUiState().metrics!),
   })
 
-  .withUiState<UiState>({
-    blockTitle: 'Repertoire Distance 2',
-    graphState: {
-      title: 'Repertoire Distance 2',
-      template: 'heatmap',
-      currentTab: null,
-    },
-
-    tableState: {
-      gridState: {},
-      pTableParams: {
-        sorting: [],
-        filters: [],
-      },
-    },
-  })
+  .withUiState<UiState>(createDefaultUiState())
 
   .argsValid((ctx) => ctx.args.abundanceRef !== undefined)
 
@@ -91,7 +33,7 @@ export const model = BlockModel.create()
       return undefined;
     }
 
-    return createPlDataTableV2(ctx, pCols, (_) => true, ctx.uiState?.tableState);
+    return createPlDataTableV2(ctx, pCols, ctx.uiState.tableState);
   })
 
   .output('pf', (ctx) => {

@@ -31,25 +31,94 @@ getLabel := func(mt) {
 	return mt;
 }
 
-getSpecs := func(abundanceSpec, metrics, blockId) {
+getFullSpecs := func(abundanceSpec, metrics, blockId) {
+	return {
+		axes: [{
+			column: "sample1",
+			spec: {
+				name: "pl7.app/sampleId",
+				type: "String",
+				domain: maps.merge(
+					abundanceSpec.axesSpec[0].domain,
+					{
+						"pl7.app/overlap": "left"
+					}
+				),
+				annotations: {
+					"pl7.app/label": "Sample 1",
+					"pl7.app/overlap": "left"
+				}
+			}
+		},
+		{
+			column: "sample2",
+			spec: {
+				name: "pl7.app/sampleId",
+				type: "String",
+				domain: maps.merge(
+					abundanceSpec.axesSpec[0].domain,
+					{
+						"pl7.app/overlap": "right"
+					}
+				),
+				annotations: {
+					"pl7.app/label": "Sample 2",
+					"pl7.app/overlap": "right"
+				}
+			}
+		},
+		{
+			column: "metric",
+			spec: {
+				name:"pl7.app/vdj/overlapMetric",
+				type: "String",
+				domain: abundanceSpec.axesSpec[0].domain,
+				annotations: {
+					"pl7.app/label": "Overlap Metric"
+				}
+			}
+		}],
+		columns: [{
+			column: "value",
+			spec: {
+				name: "pl7.app/vdj/overlap",
+				valueType: "Float",
+				domain: maps.merge(
+					abundanceSpec.domain,
+					{
+						"pl7.app/downsampling": canonical.encode(metrics[0].downsampling)
+					}
+				),
+				annotations: {
+					"pl7.app/label": "Value"
+				}
+			}
+		}],
+		storageFormat: "Binary",
+		partitionKeyLength: 0
+	}
+}
+
+getUniqueSpecs := func(abundanceSpec, metrics, blockId) {
 	columns := []
 
 	for index, metric in metrics {
 		spec := {
 			column: metric.type + "_" + metric.intersection,
 			spec: {
-					name: "pl7.app/overlap/" + metric.type,
-					valueType: "Double",
-					domain: maps.merge(
-						abundanceSpec.domain,
-						{
-							"pl7.app/overlap/type": metric.type
-						}
-					),
-					annotations: {
-						"pl7.app/label": getLabel(metric.type) + " " + metric.intersection
+				name: "pl7.app/overlap/" + metric.type,
+				valueType: "Double",
+				domain: maps.merge(
+					abundanceSpec.domain,
+					{
+						"pl7.app/overlap/type": metric.type,
+						"pl7.app/downsampling": canonical.encode(metric.downsampling)
 					}
+				),
+				annotations: {
+					"pl7.app/label": getLabel(metric.type) + " " + metric.intersection
 				}
+			}
 		}
 		columns = append(columns, spec)
 	}
@@ -63,33 +132,32 @@ getSpecs := func(abundanceSpec, metrics, blockId) {
 				domain: maps.merge(
 					abundanceSpec.axesSpec[0].domain,
 					{
-						"pl7.app/overlap" : "left"
+						"pl7.app/overlap": "left"
 					}
 				),
 				annotations: {
 					"pl7.app/label": "Sample 1",
-					"pl7.app/overlap" : "left"
-					}
-				}
-			},
-			{
-				column: "sample2",
-				spec: {
-					name: "pl7.app/sampleId",
-					type: "String",
-					domain: maps.merge(
-						abundanceSpec.axesSpec[0].domain,
-						{
-							"pl7.app/overlap" : "right"
-						}
-					),
-					annotations: {
-						"pl7.app/label": "Sample 2",
-						"pl7.app/overlap" : "right"
-					}
+					"pl7.app/overlap": "left"
 				}
 			}
-		], 
+		},
+		{
+			column: "sample2",
+			spec: {
+				name: "pl7.app/sampleId",
+				type: "String",
+				domain: maps.merge(
+					abundanceSpec.axesSpec[0].domain,
+					{
+						"pl7.app/overlap": "right"
+					}
+				),
+				annotations: {
+					"pl7.app/label": "Sample 2",
+					"pl7.app/overlap": "right"
+				}
+			}
+		}],
 		columns: columns,
 		storageFormat: "Binary",
 		partitionKeyLength: 0
@@ -142,8 +210,6 @@ wf.body(func(args) {
 	
 	tsv := table.build()
 
-	ll.print("__THE_LOG__"+args.metrics)
-
 	runDistance := exec.builder().
 		software(distanceSw).
 		arg("-i").arg("input.tsv").
@@ -161,13 +227,13 @@ wf.body(func(args) {
 	result := xsv.importFile(
 		distanceResult,
 		"tsv",
-		getSpecs(abundanceSpec, args.metrics, blockId),
+		getFullSpecs(abundanceSpec, args.metrics, blockId),
 		{ splitDataAndSpec: true }
 	)
 	resultUnique := xsv.importFile(
 		distanceResultUnique,
 		"tsv",
-		getSpecs(abundanceSpec, args.metrics, blockId),
+		getUniqueSpecs(abundanceSpec, args.metrics, blockId),
 		{ splitDataAndSpec: true }
 	)
 

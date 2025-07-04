@@ -8,26 +8,54 @@ from scipy.stats import linregress
 from numpy.random import default_rng
 
 # ---------- Downsampling ----------
-def downsample_df(df):
+def downsample_df(df, downsampling_config):
+    if downsampling_config['type'] == 'none':
+        return df
+
     total_reads = df.groupby('sampleId')['numberOfreads'].sum()
-    q20 = np.quantile(total_reads, 0.2)
-    threshold = 0.5 * q20
-    samples_above = total_reads[total_reads > threshold].index
-    min_reads = total_reads.loc[samples_above].min() if len(samples_above) > 0 else 0
+    
+    if downsampling_config['type'] == 'top':
+        n = downsampling_config.get('n', 1000)
+        df = df.sort_values('numberOfreads', ascending=False).groupby('sampleId').head(n)
+    elif downsampling_config['type'] == 'cumtop':
+        n = downsampling_config.get('n', 50)
+        df = df.sort_values('numberOfreads', ascending=False)
+        df['cumsum'] = df.groupby('sampleId')['numberOfreads'].cumsum()
+        df['total'] = df.groupby('sampleId')['numberOfreads'].transform('sum')
+        df = df[df['cumsum'] <= df['total'] * (n / 100)]
+        df = df.drop(['cumsum', 'total'], axis=1)
+    elif downsampling_config['type'] == 'hypergeometric':
+        value_chooser = downsampling_config.get('valueChooser', 'auto')
+        if value_chooser == 'auto':
+            q20 = np.quantile(total_reads, 0.2)
+            threshold = 0.5 * q20
+            samples_above = total_reads[total_reads > threshold].index
+            min_reads = total_reads.loc[samples_above].min() if len(samples_above) > 0 else 0
+        elif value_chooser == 'fixed':
+            min_reads = downsampling_config.get('n', 1000)
+        elif value_chooser == 'min':
+            min_reads = total_reads.min()
+        elif value_chooser == 'max':
+            min_reads = total_reads.max()
+        else:
+            raise ValueError(f"Unsupported value chooser: {value_chooser}")
 
-    rng = default_rng(12345)
-    downsampled = []
-    for sid in df['sampleId'].unique():
-        sample_df = df[df['sampleId'] == sid]
-        counts = sample_df['numberOfreads'].values
-        sampled_counts = rng.multivariate_hypergeometric(counts, min_reads) if sid in samples_above else counts
-        sample_df = sample_df.copy()
-        sample_df['numberOfreads'] = sampled_counts
-        downsampled.append(sample_df)
+        rng = default_rng(12345)
+        downsampled = []
+        for sid in df['sampleId'].unique():
+            sample_df = df[df['sampleId'] == sid]
+            counts = sample_df['numberOfreads'].values
+            sampled_counts = rng.multivariate_hypergeometric(counts, min_reads) if counts.sum() > min_reads else counts
+            sample_df = sample_df.copy()
+            sample_df['numberOfreads'] = sampled_counts
+            downsampled.append(sample_df)
 
-    df_down = pd.concat(downsampled, ignore_index=True)
-    df_down['fractionOfReads'] = df_down.groupby('sampleId')['numberOfreads'].transform(lambda x: x / x.sum())
-    return df_down
+        df = pd.concat(downsampled, ignore_index=True)
+    else:
+        raise ValueError(f"Unsupported downsampling type: {downsampling_config['type']}")
+
+    df['fractionOfReads'] = df.groupby('sampleId')['numberOfreads'].transform(lambda x: x / x.sum())
+    return df
 
 # ---------- Clone Key Builder ----------
 def make_clone_key(row, intersection_type):
@@ -69,28 +97,38 @@ def compute_metric(s1, s2, clones1, clones2, set1, set2, metric):
     elif metric == 'D':
         return len(shared) / (len(set1) * len(set2))
     elif metric == 'correlation':
-        return linregress(f1, f2).rvalue if len(shared) > 1 else 0.0
+        if len(shared) <= 1 or np.all(f1 == f1[0]) or np.all(f2 == f2[0]):
+            return 1.0 if np.all(f1 == f2) else 0.0
+        return linregress(f1, f2).rvalue
     elif metric == 'sharedClonotypes':
         return len(shared)
     else:
         raise ValueError(f"Unsupported metric: {metric}")
 
 # ---------- Main Processing ----------
-def compute_metrics_wide(df_down, metric_configs):
-    sample_ids = sorted(df_down['sampleId'].unique())
+def compute_metrics_wide(df_original, metric_configs):
+    sample_ids = sorted(df_original['sampleId'].unique())
 
     # All sample × sample pairs
     all_output_pairs = list(product(sample_ids, repeat=2))
     unique_pairs = list(combinations_with_replacement(sample_ids, 2))
 
-    # Group metrics by intersection type
-    metrics_by_intersection = defaultdict(list)
-    for config in metric_configs:
-        metrics_by_intersection[config['intersection']].append(config['type'])
+    # Group metrics by intersection type and downsampling config
+    metrics_by_config = defaultdict(list)
+    for i, config in enumerate(metric_configs):
+        # Create a key that includes both intersection and downsampling config
+        config_key = (config['intersection'], json.dumps(config['downsampling'], sort_keys=True))
+        metrics_by_config[config_key].append((config['type'], i))
 
     results = {}
 
-    for intersection, metric_list in metrics_by_intersection.items():
+    for (intersection, downsampling_json), metric_list in metrics_by_config.items():
+        # Parse the downsampling config
+        downsampling_config = json.loads(downsampling_json)
+        
+        # Apply downsampling for this specific configuration
+        df_down = downsample_df(df_original, downsampling_config)
+        
         # Step 1: build cloneKey once
         df = df_down.copy()
         df['cloneKey'] = df.apply(lambda row: make_clone_key(row, intersection), axis=1)
@@ -107,13 +145,13 @@ def compute_metrics_wide(df_down, metric_configs):
             sample_cloneset_dict.setdefault(sid, set())
 
         # Step 2: compute each metric only once per unique unordered pair
-        metric_values = {metric: {} for metric in metric_list}
+        metric_values = {metric: {} for metric, _ in metric_list}
 
         for s1, s2 in unique_pairs:
             c1, c2 = sample_clone_dict[s1], sample_clone_dict[s2]
             set1, set2 = sample_cloneset_dict[s1], sample_cloneset_dict[s2]
 
-            for metric in metric_list:
+            for metric, _ in metric_list:
                 val = compute_metric(s1, s2, c1, c2, set1, set2, metric)
                 metric_values[metric][(s1, s2)] = val
                 if s1 != s2:
@@ -124,7 +162,7 @@ def compute_metrics_wide(df_down, metric_configs):
             key = (s1, s2)
             if key not in results:
                 results[key] = {'sample1': s1, 'sample2': s2}
-            for metric in metric_list:
+            for metric, _ in metric_list:
                 metric_col = f"{metric}_{intersection}"
                 results[key][metric_col] = metric_values[metric].get((s1, s2), 0.0)
 
@@ -135,7 +173,7 @@ def compute_metrics_wide(df_down, metric_configs):
 def main():
     parser = argparse.ArgumentParser(description="Downsample and compute wide-format clonotype distances between samples.")
     parser.add_argument('-i', '--input', required=True, help="Input TSV or CSV file")
-    parser.add_argument('-j', '--json', required=True, help="JSON config: [{intersection: ..., type: ...}]")
+    parser.add_argument('-j', '--json', required=True, help="JSON config: [{intersection: ..., type: ..., downsampling: ...}]")
     parser.add_argument('-o1', '--output_full', required=True, help="Output CSV file with all sample pairs (matrix-friendly)")
     parser.add_argument('-o2', '--output_unique', required=True, help="Output CSV file with unique sample pairs only")
     parser.add_argument('--sep', default=None, help="Field separator (default auto-detect: CSV=',' or TSV='\\t')")
@@ -161,15 +199,25 @@ def main():
     with open(args.json, 'r') as f:
         metric_configs = json.load(f)
 
-    df_downsampled = downsample_df(df)
-    full_result_df = compute_metrics_wide(df_downsampled, metric_configs)
+    # Apply downsampling for each metric configuration individually
+    wide_result_df = compute_metrics_wide(df, metric_configs)
 
-    # Save full version
+    # Convert wide format to long format for full results
+    value_columns = [f"{m['type']}_{m['intersection']}" for m in metric_configs]
+    full_result_df = pd.melt(
+        wide_result_df,
+        id_vars=['sample1', 'sample2'],
+        value_vars=value_columns,
+        var_name='metric',
+        value_name='value'
+    )
+
+    # Save full version (long format)
     full_result_df.to_csv(args.output_full, index=False, sep='\t')
 
-    # Deduplicate: keep only (sample1 <= sample2)
-    unique_result_df = full_result_df[
-        full_result_df['sample1'] <= full_result_df['sample2']
+    # Keep only (sample1 <= sample2) in wide format
+    unique_result_df = wide_result_df[
+        wide_result_df['sample1'] <= wide_result_df['sample2']
     ].copy()
     unique_result_df.to_csv(args.output_unique, index=False, sep='\t')
 
