@@ -1,112 +1,129 @@
 <script setup lang="ts">
 import type { PlRef } from '@platforma-sdk/model';
 import { plRefsEqual } from '@platforma-sdk/model';
-import { PlDropdownRef, PlMaskIcon16, PlMaskIcon24, PlSlideModal } from '@platforma-sdk/ui-vue';
-import { reactive } from 'vue';
+import { PlDropdownRef, PlElementList, PlSlideModal, PlBtnSecondary } from '@platforma-sdk/ui-vue';
+import { watch } from 'vue';
 import { useApp } from '../app';
 import DistanceCard from './DistanceCard.vue';
 import './metrics-manager.scss';
 import { getMetricLabel } from './util';
+import { convertMetricsUiToArgs, convertMetricsArgsToUi } from '../../../model/src/uiState';
+import type { MetricUI } from '../../../model/src/types';
 
 const app = useApp();
 
 function setAbundanceRef(abundanceRef?: PlRef) {
-  app.model.args.abundanceRef = abundanceRef;
+  (app.model.args as any).abundanceRef = abundanceRef;
   let label = '';
   if (abundanceRef) {
-    label = app.model.outputs.abundanceOptions?.find((o) => plRefsEqual(o.ref, abundanceRef))?.label ?? '';
+    label = (app.model.outputs as any).abundanceOptions?.find((o: any) => plRefsEqual(o.ref, abundanceRef))?.label ?? '';
   }
-  app.model.ui.blockTitle = 'Repertoire Distance – ' + label;
+  (app.model.ui as any).blockTitle = 'Repertoire Distance – ' + label;
 }
 
 const settingsAreShown = defineModel<boolean>({ required: true });
 
-const openState = reactive<Record<number, boolean>>({});
+// Initialize UI state metrics if not present
+if (!(app.model.ui as any).metrics) {
+  (app.model.ui as any).metrics = convertMetricsArgsToUi((app.model.args as any).metrics);
+}
 
-const toggleExpandMetric = (index: number) => {
-  if (!openState[index]) openState[index] = true;
-  else delete openState[index];
-};
+// Sync UI state metrics with args when they change
+watch(() => (app.model.ui as any).metrics, (metrics: MetricUI[]) => {
+  if (metrics) {
+    (app.model.args as any).metrics = convertMetricsUiToArgs(metrics);
+  }
+}, { deep: true });
 
-const deleteMetric = (index: number) => {
-  const len = app.model.args.metrics.length;
-  app.model.args.metrics.splice(index, 1);
-  delete openState[index];
-  for (let i = index; i < len - 1; i++) {
-    openState[i] = openState[i + 1];
+// Sync args with UI state when they change externally
+watch(() => (app.model.args as any).metrics, (metrics: any[]) => {
+  if (metrics && !(app.model.ui as any).metrics) {
+    (app.model.ui as any).metrics = convertMetricsArgsToUi(metrics);
+  }
+}, { deep: true });
+
+const handleExpand = (metric: MetricUI, index: number) => {
+  if ((app.model.ui as any).metrics) {
+    (app.model.ui as any).metrics[index].isExpanded = !(app.model.ui as any).metrics[index].isExpanded;
   }
 };
 
+const handleRemove = (metric: MetricUI, index: number) => {
+  if ((app.model.ui as any).metrics) {
+    (app.model.ui as any).metrics.splice(index, 1);
+  }
+  return true; // Allow removal
+};
+
+const handleSort = (oldIndex: number, newIndex: number) => {
+  if ((app.model.ui as any).metrics) {
+    const item = (app.model.ui as any).metrics.splice(oldIndex, 1)[0];
+    (app.model.ui as any).metrics.splice(newIndex, 0, item);
+  }
+  return true; // Allow sorting
+};
+
 const addMetric = () => {
-  app.updateArgs((args) => {
-    const index = args.metrics.length;
-    args.metrics.push({
-      type: undefined,
-      intersection: 'CDR3ntVJ',
-      downsampling: {
-        type: 'none',
-        valueChooser: 'auto',
-      },
-    });
-    openState[index] = true;
+  if (!(app.model.ui as any).metrics) {
+    (app.model.ui as any).metrics = [];
+  }
+  
+  (app.model.ui as any).metrics.push({
+    id: Math.random(),
+    isExpanded: true,
+    type: undefined,
+    intersection: 'CDR3ntVJ',
+    downsampling: {
+      type: 'none',
+      valueChooser: 'auto',
+    },
   });
 };
+
+const getItemKey = (metric: MetricUI) => metric.id || JSON.stringify(metric);
+
+const isExpanded = (metric: MetricUI) => Boolean(metric.isExpanded);
 </script>
 
 <template>
   <PlSlideModal v-model="settingsAreShown">
     <template #title>Settings</template>
+
     <PlDropdownRef
-      v-model="app.model.args.abundanceRef" :options="app.model.outputs.abundanceOptions ?? []"
+      v-model="(app.model.args as any).abundanceRef" 
+      :options="(app.model.outputs as any).abundanceOptions ?? []"
       label="Abundance"
       required
       @update:model-value="setAbundanceRef"
     />
 
-    <div class="metrics-manager d-flex flex-column gap-6">
-      <div
-        v-for="(entry, index) in app.model.args.metrics"
-        :key="index"
-        :class="{ open: openState[index] ?? false }"
-        class="metrics-manager__metric"
+    <div class="d-flex flex-column gap-6">
+      <PlElementList
+        v-if="(app.model.ui as any).metrics"
+        v-model:items="(app.model.ui as any).metrics"
+        :getItemKey="getItemKey"
+        :isExpandable="() => true"
+        :isExpanded="isExpanded"
+        :onExpand="handleExpand"
+        :isRemovable="() => true"
+        :onRemove="handleRemove"
+        :onSort="handleSort"
       >
-        <div
-          class="metrics-manager__header d-flex align-center gap-8"
-          @click="toggleExpandMetric(index)"
-        >
-          <div class="metrics-manager__expand-icon">
-            <PlMaskIcon16 name="chevron-right" />
+        <template #item-title="{ item: metric }">
+          <div class="text-s-btn">
+            {{ metric.type ? getMetricLabel(metric.type) : 'New Metric' }}
           </div>
+        </template>
 
-          <div class="metrics-manager__title flex-grow-1 text-s-btn">
-            {{ entry.type ? getMetricLabel(entry.type) : 'New Metric' }}
-          </div>
-
-          <div class="metrics-manager__actions">
-            <div class="metrics-manager__delete ms-auto" @click.stop="deleteMetric(index)">
-              <PlMaskIcon24 name="close" />
-            </div>
-          </div>
-        </div>
-
-        <div class="metrics-manager__content d-flex gap-24 p-24 flex-column">
+        <template #item-content="{ index }">
           <DistanceCard
-            v-model="app.model.args.metrics[index]"
+            v-model="(app.model.ui as any).metrics[index]"
           />
-        </div>
-      </div>
-
-      <div :class="{ 'pt-24': true }" class="metrics-manager__add-action-wrapper">
-        <div
-          class="metrics-manager__add-btn"
-          @click="addMetric"
-        >
-          <div class="metrics-manager__add-btn-icon">
-            <PlMaskIcon16 name="add" />
-          </div>
-          <div class="metrics-manager__add-btn-title text-s-btn">Add Metric</div>
-        </div>
-      </div>
+        </template>
+      </PlElementList>
+      <PlBtnSecondary icon="add" @click="addMetric">
+        Add Metric
+      </PlBtnSecondary>
     </div>
   </PlSlideModal>
 </template>

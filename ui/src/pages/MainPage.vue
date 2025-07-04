@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { PlDataTableModel, PlDataTableStateV2 } from '@platforma-sdk/model';
+import type { PlDataTableStateV2 } from '@platforma-sdk/model';
 import { PlAgDataTableV2, PlBlockPage, PlBtnGhost, PlEditableTitle, PlMaskIcon24, usePlDataTableSettingsV2 } from '@platforma-sdk/ui-vue';
 import { computed, ref } from 'vue';
 import { useApp } from '../app';
@@ -8,7 +8,7 @@ import SettingsModal from './Settings.vue';
 const app = useApp();
 
 const tableSettings = usePlDataTableSettingsV2({
-  model: () => app.model.outputs.pt as PlDataTableModel | undefined,
+  model: () => app.model.outputs.pt,
 });
 
 const tableLoadingText = computed(() => {
