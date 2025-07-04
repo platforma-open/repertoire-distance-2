@@ -106,21 +106,29 @@ def compute_metric(s1, s2, clones1, clones2, set1, set2, metric):
         raise ValueError(f"Unsupported metric: {metric}")
 
 # ---------- Main Processing ----------
-def compute_metrics_wide(df_down, metric_configs):
-    sample_ids = sorted(df_down['sampleId'].unique())
+def compute_metrics_wide(df_original, metric_configs):
+    sample_ids = sorted(df_original['sampleId'].unique())
 
     # All sample × sample pairs
     all_output_pairs = list(product(sample_ids, repeat=2))
     unique_pairs = list(combinations_with_replacement(sample_ids, 2))
 
-    # Group metrics by intersection type
-    metrics_by_intersection = defaultdict(list)
-    for config in metric_configs:
-        metrics_by_intersection[config['intersection']].append(config['type'])
+    # Group metrics by intersection type and downsampling config
+    metrics_by_config = defaultdict(list)
+    for i, config in enumerate(metric_configs):
+        # Create a key that includes both intersection and downsampling config
+        config_key = (config['intersection'], json.dumps(config['downsampling'], sort_keys=True))
+        metrics_by_config[config_key].append((config['type'], i))
 
     results = {}
 
-    for intersection, metric_list in metrics_by_intersection.items():
+    for (intersection, downsampling_json), metric_list in metrics_by_config.items():
+        # Parse the downsampling config
+        downsampling_config = json.loads(downsampling_json)
+        
+        # Apply downsampling for this specific configuration
+        df_down = downsample_df(df_original, downsampling_config)
+        
         # Step 1: build cloneKey once
         df = df_down.copy()
         df['cloneKey'] = df.apply(lambda row: make_clone_key(row, intersection), axis=1)
@@ -137,13 +145,13 @@ def compute_metrics_wide(df_down, metric_configs):
             sample_cloneset_dict.setdefault(sid, set())
 
         # Step 2: compute each metric only once per unique unordered pair
-        metric_values = {metric: {} for metric in metric_list}
+        metric_values = {metric: {} for metric, _ in metric_list}
 
         for s1, s2 in unique_pairs:
             c1, c2 = sample_clone_dict[s1], sample_clone_dict[s2]
             set1, set2 = sample_cloneset_dict[s1], sample_cloneset_dict[s2]
 
-            for metric in metric_list:
+            for metric, _ in metric_list:
                 val = compute_metric(s1, s2, c1, c2, set1, set2, metric)
                 metric_values[metric][(s1, s2)] = val
                 if s1 != s2:
@@ -154,7 +162,7 @@ def compute_metrics_wide(df_down, metric_configs):
             key = (s1, s2)
             if key not in results:
                 results[key] = {'sample1': s1, 'sample2': s2}
-            for metric in metric_list:
+            for metric, _ in metric_list:
                 metric_col = f"{metric}_{intersection}"
                 results[key][metric_col] = metric_values[metric].get((s1, s2), 0.0)
 
@@ -191,9 +199,8 @@ def main():
     with open(args.json, 'r') as f:
         metric_configs = json.load(f)
 
-    # Apply downsampling for each metric configuration
-    df_downsampled = downsample_df(df, metric_configs[0]['downsampling'])  # Use first metric's downsampling config
-    wide_result_df = compute_metrics_wide(df_downsampled, metric_configs)
+    # Apply downsampling for each metric configuration individually
+    wide_result_df = compute_metrics_wide(df, metric_configs)
 
     # Convert wide format to long format for full results
     value_columns = [f"{m['type']}_{m['intersection']}" for m in metric_configs]
