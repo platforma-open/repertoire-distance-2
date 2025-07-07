@@ -121,7 +121,7 @@ def compute_metric(s1, s2, clones1, clones2, set1, set2, metric):
         raise ValueError(f"Unsupported metric: {metric}")
 
 # ---------- Main Processing ----------
-def compute_metrics_wide(df_original, metric_configs):
+def compute_metrics_wide(df_original, metric_configs, is_single_cell_data):
     sample_ids = sorted(df_original['sampleId'].unique())
 
     # All sample × sample pairs
@@ -243,7 +243,7 @@ def main():
         metric_configs = json.load(f)
 
     # Apply downsampling for each metric configuration individually
-    wide_result_df = compute_metrics_wide(df, metric_configs)
+    wide_result_df = compute_metrics_wide(df, metric_configs, is_single_cell_data)
 
     # Convert wide format to long format for full results
     value_columns = [f"{m['type']}_{m['intersection']}" for m in metric_configs]

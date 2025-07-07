@@ -206,8 +206,6 @@ wf.body(func(args) {
 				alphabet := seqColumn.spec.domain["pl7.app/alphabet"]
 				alphabetShort := (alphabet == "aminoacid") ? "aa" : "nt"
 				table.add(seqColumn, {header: "CDR3 " + alphabetShort + " " + chain})
-			} else {
-				table.add(seqColumn, {header: seqColumn.spec.annotations["pl7.app/label"]})
 			}
 		} else {
 			table.add(seqColumn, {header: seqColumn.spec.annotations["pl7.app/label"]})
@@ -223,7 +221,7 @@ wf.body(func(args) {
 					table.add(columns.getColumn(geneColumn.key), {header: geneColumn.spec.domain["pl7.app/vdj/reference"] + " " + chain})
 				}
 			} else {
-				table.add(geneColumn, {header: geneColumn.spec.annotations["pl7.app/label"]})
+				table.add(geneColumn, {header: geneColumn.spec.domain["pl7.app/vdj/reference"]})
 			}
 		}
 	}
