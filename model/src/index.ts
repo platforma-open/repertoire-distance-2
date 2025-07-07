@@ -1,5 +1,5 @@
 import type { GraphMakerState } from '@milaboratories/graph-maker';
-import type { InferOutputsType, PColumnIdAndSpec, PlDataTableState, PlRef } from '@platforma-sdk/model';
+import type { InferOutputsType, PColumnIdAndSpec, PlDataTableStateV2, PlRef } from '@platforma-sdk/model';
 import { BlockModel, createPFrameForGraphs, createPlDataTableV2 } from '@platforma-sdk/model';
 
 export type DistanceType = 'F1' | 'F2' | 'D' |
@@ -19,7 +19,7 @@ export type BlockArgs = {
 
 export type UiState = {
   blockTitle: string;
-  tableState?: PlDataTableState;
+  tableState?: PlDataTableStateV2;
   graphState: GraphMakerState;
 };
 
