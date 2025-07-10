@@ -135,14 +135,23 @@ def compute_metrics_wide(df_original, metric_configs, is_single_cell_data):
         config_key = (config['intersection'], json.dumps(config['downsampling'], sort_keys=True))
         metrics_by_config[config_key].append((config['type'], i))
 
+    # Cache for downsampled datasets
+    downsampled_cache = {}
+
     results = {}
 
     for (intersection, downsampling_json), metric_list in metrics_by_config.items():
         # Parse the downsampling config
         downsampling_config = json.loads(downsampling_json)
         
-        # Apply downsampling for this specific configuration
-        df_down = downsample_df(df_original, downsampling_config)
+        # Check if we already have this downsampling config cached
+        if downsampling_json not in downsampled_cache:
+            # Apply downsampling for this specific configuration and cache it
+            df_down = downsample_df(df_original, downsampling_config)
+            downsampled_cache[downsampling_json] = df_down
+        else:
+            # Use cached downsampled dataset
+            df_down = downsampled_cache[downsampling_json]
         
         # Step 1: build cloneKey once
         df = df_down.copy()
@@ -179,7 +188,7 @@ def compute_metrics_wide(df_original, metric_configs, is_single_cell_data):
             if key not in results:
                 results[key] = {'sample1': s1, 'sample2': s2}
             for metric, _ in metric_list:
-                metric_col = f"{metric}_{intersection}"
+                metric_col = f"{metric} {intersection}"
                 results[key][metric_col] = metric_values[metric].get((s1, s2), 0.0)
 
     return pd.DataFrame(results.values())
@@ -246,7 +255,7 @@ def main():
     wide_result_df = compute_metrics_wide(df, metric_configs, is_single_cell_data)
 
     # Convert wide format to long format for full results
-    value_columns = [f"{m['type']}_{m['intersection']}" for m in metric_configs]
+    value_columns = [f"{m['type']} {m['intersection']}" for m in metric_configs]
     full_result_df = pd.melt(
         wide_result_df,
         id_vars=['sample1', 'sample2'],

@@ -21,8 +21,6 @@ function setAbundanceRef(abundanceRef?: PlRef) {
   (app.model.ui as any).blockTitle = 'Repertoire Distance – ' + label;
 }
 
-const settingsAreShown = defineModel<boolean>({ required: true });
-
 // Initialize UI state metrics if not present
 if (!(app.model.ui as any).metrics) {
   (app.model.ui as any).metrics = convertMetricsArgsToUi((app.model.args as any).metrics);
@@ -86,44 +84,37 @@ const isExpanded = (metric: MetricUI) => Boolean(metric.isExpanded);
 </script>
 
 <template>
-  <PlSlideModal v-model="settingsAreShown">
-    <template #title>Settings</template>
+  <PlDropdownRef
+    v-model="(app.model.args as any).abundanceRef" 
+    :options="(app.model.outputs as any).abundanceOptions ?? []"
+    label="Abundance"
+    required
+    @update:model-value="setAbundanceRef"
+  />
+  <PlElementList
+    v-if="(app.model.ui as any).metrics"
+    v-model:items="(app.model.ui as any).metrics"
+    :getItemKey="getItemKey"
+    :isExpandable="() => true"
+    :isExpanded="isExpanded"
+    :onExpand="handleExpand"
+    :isRemovable="() => true"
+    :onRemove="handleRemove"
+    :onSort="handleSort"
+  >
+    <template #item-title="{ item: metric }">
+      <div class="text-s-btn">
+        {{ metric.type ? getMetricLabel(metric.type) : 'New Metric' }}
+      </div>
+    </template>
 
-    <PlDropdownRef
-      v-model="(app.model.args as any).abundanceRef" 
-      :options="(app.model.outputs as any).abundanceOptions ?? []"
-      label="Abundance"
-      required
-      @update:model-value="setAbundanceRef"
-    />
-
-    <div class="d-flex flex-column gap-6">
-      <PlElementList
-        v-if="(app.model.ui as any).metrics"
-        v-model:items="(app.model.ui as any).metrics"
-        :getItemKey="getItemKey"
-        :isExpandable="() => true"
-        :isExpanded="isExpanded"
-        :onExpand="handleExpand"
-        :isRemovable="() => true"
-        :onRemove="handleRemove"
-        :onSort="handleSort"
-      >
-        <template #item-title="{ item: metric }">
-          <div class="text-s-btn">
-            {{ metric.type ? getMetricLabel(metric.type) : 'New Metric' }}
-          </div>
-        </template>
-
-        <template #item-content="{ index }">
-          <DistanceCard
-            v-model="(app.model.ui as any).metrics[index]"
-          />
-        </template>
-      </PlElementList>
-      <PlBtnSecondary icon="add" @click="addMetric">
-        Add Metric
-      </PlBtnSecondary>
-    </div>
-  </PlSlideModal>
+    <template #item-content="{ index }">
+      <DistanceCard
+        v-model="(app.model.ui as any).metrics[index]"
+      />
+    </template>
+  </PlElementList>
+  <PlBtnSecondary icon="add" @click="addMetric">
+    Add Metric
+  </PlBtnSecondary>
 </template>

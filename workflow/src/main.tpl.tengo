@@ -31,7 +31,7 @@ getLabel := func(mt) {
 	return mt;
 }
 
-getFullSpecs := func(abundanceSpec, metrics, blockId) {
+getFullSpecs := func(abundanceSpec, metrics) {
 	return {
 		axes: [{
 			column: "sample1",
@@ -45,8 +45,7 @@ getFullSpecs := func(abundanceSpec, metrics, blockId) {
 					}
 				),
 				annotations: {
-					"pl7.app/label": "Sample 1",
-					"pl7.app/overlap": "left"
+					"pl7.app/label": "Sample 1"
 				}
 			}
 		},
@@ -62,8 +61,7 @@ getFullSpecs := func(abundanceSpec, metrics, blockId) {
 					}
 				),
 				annotations: {
-					"pl7.app/label": "Sample 2",
-					"pl7.app/overlap": "right"
+					"pl7.app/label": "Sample 2"
 				}
 			}
 		},
@@ -94,71 +92,6 @@ getFullSpecs := func(abundanceSpec, metrics, blockId) {
 				}
 			}
 		}],
-		storageFormat: "Binary",
-		partitionKeyLength: 0
-	}
-}
-
-getUniqueSpecs := func(abundanceSpec, metrics, blockId) {
-	columns := []
-
-	for index, metric in metrics {
-		spec := {
-			column: metric.type + "_" + metric.intersection,
-			spec: {
-				name: "pl7.app/overlap/" + metric.type,
-				valueType: "Double",
-				domain: maps.merge(
-					abundanceSpec.domain,
-					{
-						"pl7.app/overlap/type": metric.type,
-						"pl7.app/downsampling": canonical.encode(metric.downsampling)
-					}
-				),
-				annotations: {
-					"pl7.app/label": getLabel(metric.type) + " " + metric.intersection
-				}
-			}
-		}
-		columns = append(columns, spec)
-	}
-
-	return {
-		axes: [{
-			column: "sample1",
-			spec: {
-				name: "pl7.app/sampleId",
-				type: "String",
-				domain: maps.merge(
-					abundanceSpec.axesSpec[0].domain,
-					{
-						"pl7.app/overlap": "left"
-					}
-				),
-				annotations: {
-					"pl7.app/label": "Sample 1",
-					"pl7.app/overlap": "left"
-				}
-			}
-		},
-		{
-			column: "sample2",
-			spec: {
-				name: "pl7.app/sampleId",
-				type: "String",
-				domain: maps.merge(
-					abundanceSpec.axesSpec[0].domain,
-					{
-						"pl7.app/overlap": "right"
-					}
-				),
-				annotations: {
-					"pl7.app/label": "Sample 2",
-					"pl7.app/overlap": "right"
-				}
-			}
-		}],
-		columns: columns,
 		storageFormat: "Binary",
 		partitionKeyLength: 0
 	}
@@ -245,42 +178,29 @@ wf.body(func(args) {
 	result := xsv.importFile(
 		distanceResult,
 		"tsv",
-		getFullSpecs(abundanceSpec, args.metrics, blockId),
-		{ splitDataAndSpec: true }
-	)
-	resultUnique := xsv.importFile(
-		distanceResultUnique,
-		"tsv",
-		getUniqueSpecs(abundanceSpec, args.metrics, blockId),
+		getFullSpecs(abundanceSpec, args.metrics),
 		{ splitDataAndSpec: true }
 	)
 
-	//trace := pSpec.makeTrace(
-	//	abundanceSpec,
-	//	{
-	//		type: "milaboratories.differential-repertoire-diversity",
-	//		id: blockId,
-	//		importance: 30, 
-	//		label: "Repertoire Diversity"
-	//	}
-	//)
+	trace := pSpec.makeTrace(
+		abundanceSpec,
+		{
+			type: "milaboratories.repertoire-distance",
+			id: blockId,
+			importance: 30, 
+			label: "Repertoire Distance 2"
+		}
+	)
 
 	pf := pframes.pFrameBuilder()
 	for id, v in result {
-		pf.add(id, v.spec, v.data)
+		pf.add(id, trace.inject(v.spec), v.data)
 	}
 	pf = pf.build()
 
-	pfUnique := pframes.pFrameBuilder()	
-	for id, v in resultUnique {
-		pfUnique.add(id, v.spec, v.data)
-	}
-	pfUnique = pfUnique.build()
-
 	return {
 		outputs: {
-			pf: pframes.exportFrame(pf),
-			pfUnique: pframes.exportFrame(pfUnique)
+			pf: pframes.exportFrame(pf)
 		},
 		exports: {}
 	}

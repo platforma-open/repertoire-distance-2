@@ -1,14 +1,10 @@
 import type { InferOutputsType, PColumnIdAndSpec, PColumnSpec } from '@platforma-sdk/model';
-import { BlockModel, createPFrameForGraphs, createPlDataTableV2, isPColumnSpec } from '@platforma-sdk/model';
+import { BlockModel, createPFrameForGraphs } from '@platforma-sdk/model';
 import type { BlockArgs, UiState } from './types';
 import { createDefaultUiState, convertMetricsUiToArgs } from './uiState';
 
 export * from './types';
 export * from './uiState';
-
-function isNumericType(c: PColumnSpec): boolean {
-  return c.valueType === 'Double' || c.valueType === 'Int' || c.valueType === 'Float' || c.valueType === 'Long';
-}
 
 export const model = BlockModel.create()
   .withArgs<BlockArgs>({
@@ -34,21 +30,11 @@ export const model = BlockModel.create()
     ], { includeNativeLabel: true }),
   )
 
-  .output('pt', (ctx) => {
-    const pCols = ctx.outputs?.resolve('pfUnique')?.getPColumns();
-    if (pCols === undefined) {
-      return undefined;
-    }
-
-    return createPlDataTableV2(ctx, pCols, ctx.uiState.tableState);
-  })
-
   .output('pf', (ctx) => {
     const pCols = ctx.outputs?.resolve('pf')?.getPColumns();
     if (pCols === undefined) {
       return undefined;
     }
-
     return createPFrameForGraphs(ctx, pCols);
   })
 
@@ -72,8 +58,8 @@ export const model = BlockModel.create()
   .title((ctx) => ctx.uiState?.blockTitle ?? 'Repertoire Distance')
 
   .sections((_) => [
-    { type: 'link', href: '/', label: 'Main' },
-    { type: 'link', href: '/distanceGraph', label: 'Distance Graph' },
+    { type: 'link', href: '/', label: 'Distance Graph' },
+    // { type: 'link', href: '/distanceGraph', label: 'Distance Graph' },
   ])
 
   .done();

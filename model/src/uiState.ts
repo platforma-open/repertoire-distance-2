@@ -1,16 +1,19 @@
 import { randomInt } from '@milaboratories/helpers';
-import { createPlDataTableStateV2 } from '@platforma-sdk/model';
 import type { Metric, MetricUI, UiState } from './types';
 
 export const createDefaultUiState = (): UiState => {
   return {
-    blockTitle: 'Repertoire Distance 2',
+    blockTitle: 'Repertoire Distance',
     graphState: {
-      title: 'Repertoire Distance 2',
+      title: 'Repertoire Distance',
       template: 'heatmap',
-      currentTab: null,
+      currentTab: 'settings',
+      layersSettings: {
+        heatmapClustered: {
+          normalizationDirection: null,
+        },
+      },
     },
-    tableState: createPlDataTableStateV2(),
     metrics: createDefaultMetricUis(),
   };
 };

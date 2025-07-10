@@ -1,5 +1,5 @@
 import type { GraphMakerState } from '@milaboratories/graph-maker';
-import type { PlDataTableStateV2, PlRef } from '@platforma-sdk/model';
+import type { PlRef } from '@platforma-sdk/model';
 
 export type DistanceType = 'F1' | 'F2' | 'D' |
   'sharedClonotypes' | 'correlation' | 'jaccard';
@@ -28,7 +28,6 @@ export type BlockArgs = {
 
 export type UiState = {
   blockTitle: string;
-  tableState: PlDataTableStateV2;
   graphState: GraphMakerState;
   metrics?: MetricUI[];
 }; 
