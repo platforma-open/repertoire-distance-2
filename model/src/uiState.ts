@@ -1,5 +1,4 @@
-import { randomInt } from '@milaboratories/helpers';
-import type { Metric, MetricUI, UiState } from './types';
+import type { UiState, Metric } from './types';
 
 export const createDefaultUiState = (): UiState => {
   return {
@@ -14,91 +13,70 @@ export const createDefaultUiState = (): UiState => {
         },
       },
     },
-    metrics: createDefaultMetricUis(),
   };
 };
 
-export const createDefaultMetricUis = (): MetricUI[] => {
+export const createDefaultMetricUis = (): Metric[] => {
   return [
     {
-      id: randomInt(),
-      isExpanded: false,
+      id: 'f1-cdr3ntvj',
       type: 'F1',
       intersection: 'CDR3ntVJ',
       downsampling: {
         type: 'hypergeometric',
         valueChooser: 'auto',
       },
+      isExpanded: false,
     },
     {
-      id: randomInt(),
-      isExpanded: false,
+      id: 'f2-cdr3ntvj',
       type: 'F2',
       intersection: 'CDR3ntVJ',
       downsampling: {
         type: 'hypergeometric',
         valueChooser: 'auto',
       },
+      isExpanded: false,
     },
     {
-      id: randomInt(),
-      isExpanded: false,
-      type: 'D',
-      intersection: 'CDR3ntVJ',
-      downsampling: {
-        type: 'hypergeometric',
-        valueChooser: 'auto',
-      },
-    },
-    {
-      id: randomInt(),
-      isExpanded: false,
-      type: 'sharedClonotypes',
-      intersection: 'CDR3ntVJ',
-      downsampling: {
-        type: 'hypergeometric',
-        valueChooser: 'auto',
-      },
-    },
-    {
-      id: randomInt(),
-      isExpanded: false,
-      type: 'correlation',
-      intersection: 'CDR3ntVJ',
-      downsampling: {
-        type: 'hypergeometric',
-        valueChooser: 'auto',
-      },
-    },
-    {
-      id: randomInt(),
-      isExpanded: false,
+      id: 'jaccard-cdr3ntvj',
       type: 'jaccard',
       intersection: 'CDR3ntVJ',
       downsampling: {
         type: 'hypergeometric',
         valueChooser: 'auto',
       },
+      isExpanded: false,
+    },
+    {
+      id: 'd-cdr3ntvj',
+      type: 'D',
+      intersection: 'CDR3ntVJ',
+      downsampling: {
+        type: 'hypergeometric',
+        valueChooser: 'auto',
+      },
+      isExpanded: false,
+    },
+    {
+      id: 'shared-cdr3ntvj',
+      type: 'sharedClonotypes',
+      intersection: 'CDR3ntVJ',
+      downsampling: {
+        type: 'hypergeometric',
+        valueChooser: 'auto',
+      },
+      isExpanded: false,
+    },
+    {
+      id: 'correlation-cdr3ntvj',
+      type: 'correlation',
+      intersection: 'CDR3ntVJ',
+      downsampling: {
+        type: 'hypergeometric',
+        valueChooser: 'auto',
+      },
+      isExpanded: false,
     },
   ];
-};
-
-export const convertMetricsUiToArgs = (metrics: MetricUI[]): Metric[] => {
-  return metrics.map((metric): Metric => {
-    return {
-      type: metric.type,
-      intersection: metric.intersection,
-      downsampling: metric.downsampling,
-    };
-  });
-};
-
-export const convertMetricsArgsToUi = (metrics: Metric[]): MetricUI[] => {
-  return metrics.map((metric): MetricUI => {
-    return {
-      ...metric,
-      id: randomInt(),
-      isExpanded: false,
-    };
-  });
 }; 

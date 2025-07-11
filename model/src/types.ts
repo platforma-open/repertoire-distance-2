@@ -7,6 +7,7 @@ export type DistanceType = 'F1' | 'F2' | 'D' |
 export type IntersectionType = 'CDR3ntVJ' | 'CDR3aaVJ' | 'CDR3nt' | 'CDR3aa';
 
 export type Metric = {
+  id: string;
   type: DistanceType | undefined;
   intersection: IntersectionType | undefined;
   downsampling: {
@@ -14,10 +15,6 @@ export type Metric = {
     valueChooser?: 'min' | 'fixed' | 'max' | 'auto';
     n?: number;
   };
-};
-
-export type MetricUI = Metric & {
-  id?: number;
   isExpanded?: boolean;
 };
 
@@ -29,5 +26,4 @@ export type BlockArgs = {
 export type UiState = {
   blockTitle: string;
   graphState: GraphMakerState;
-  metrics?: MetricUI[];
-}; 
+};

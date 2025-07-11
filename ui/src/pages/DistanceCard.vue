@@ -2,8 +2,15 @@
 import type { Metric } from '@platforma-open/milaboratories.repertoire-distance-2.model';
 import type { ListOption } from '@platforma-sdk/ui-vue';
 import { PlBtnGroup, PlDropdown, PlNumberField } from '@platforma-sdk/ui-vue';
-import './metrics-manager.scss';
-import { metricTypeOptions } from './util';
+
+const metricTypeOptions: ListOption<string | undefined>[] = [
+  { label: 'F1 Overlap', value: 'F1' },
+  { label: 'F2 Overlap', value: 'F2' },
+  { label: 'D Distance', value: 'D' },
+  { label: 'Shared Clonotypes', value: 'sharedClonotypes' },
+  { label: 'Correlation', value: 'correlation' },
+  { label: 'Jaccard Index', value: 'jaccard' },
+];
 
 const intersectionOptions: ListOption<string | undefined>[] = [
   { label: 'CDR3nt|V|J', value: 'CDR3ntVJ' },

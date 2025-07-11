@@ -1,119 +1,50 @@
 <script setup lang="ts">
 import type { PlRef } from '@platforma-sdk/model';
 import { plRefsEqual } from '@platforma-sdk/model';
-import { PlDropdownRef, PlElementList, PlSlideModal, PlBtnSecondary } from '@platforma-sdk/ui-vue';
-import { watch } from 'vue';
+import { PlDropdownRef, PlElementList, PlBtnSecondary } from '@platforma-sdk/ui-vue';
 import { useApp } from '../app';
-import DistanceCard from './DistanceCard.vue';
-import './metrics-manager.scss';
 import { getMetricLabel } from './util';
-import { convertMetricsUiToArgs, convertMetricsArgsToUi } from '../../../model/src/uiState';
-import type { MetricUI } from '../../../model/src/types';
+import DistanceCard from './DistanceCard.vue';
+import { useMetrics } from './metrics';
 
 const app = useApp();
+const { metrics, addMetric } = useMetrics();
 
 function setAbundanceRef(abundanceRef?: PlRef) {
-  (app.model.args as any).abundanceRef = abundanceRef;
-  let label = '';
+  app.model.args.abundanceRef = abundanceRef;
   if (abundanceRef) {
-    label = (app.model.outputs as any).abundanceOptions?.find((o: any) => plRefsEqual(o.ref, abundanceRef))?.label ?? '';
+    const label = app.model.outputs.abundanceOptions?.find((o) => plRefsEqual(o.ref, abundanceRef))?.label ?? '';
+    if (label) {
+      app.model.ui.blockTitle = 'Repertoire Distance – ' + label;
+    }
   }
-  (app.model.ui as any).blockTitle = 'Repertoire Distance – ' + label;
 }
-
-// Initialize UI state metrics if not present
-if (!(app.model.ui as any).metrics) {
-  (app.model.ui as any).metrics = convertMetricsArgsToUi((app.model.args as any).metrics);
-}
-
-// Sync UI state metrics with args when they change
-watch(() => (app.model.ui as any).metrics, (metrics: MetricUI[]) => {
-  if (metrics) {
-    (app.model.args as any).metrics = convertMetricsUiToArgs(metrics);
-  }
-}, { deep: true });
-
-// Sync args with UI state when they change externally
-watch(() => (app.model.args as any).metrics, (metrics: any[]) => {
-  if (metrics && !(app.model.ui as any).metrics) {
-    (app.model.ui as any).metrics = convertMetricsArgsToUi(metrics);
-  }
-}, { deep: true });
-
-const handleExpand = (metric: MetricUI, index: number) => {
-  if ((app.model.ui as any).metrics) {
-    (app.model.ui as any).metrics[index].isExpanded = !(app.model.ui as any).metrics[index].isExpanded;
-  }
-};
-
-const handleRemove = (metric: MetricUI, index: number) => {
-  if ((app.model.ui as any).metrics) {
-    (app.model.ui as any).metrics.splice(index, 1);
-  }
-  return true; // Allow removal
-};
-
-const handleSort = (oldIndex: number, newIndex: number) => {
-  if ((app.model.ui as any).metrics) {
-    const item = (app.model.ui as any).metrics.splice(oldIndex, 1)[0];
-    (app.model.ui as any).metrics.splice(newIndex, 0, item);
-  }
-  return true; // Allow sorting
-};
-
-const addMetric = () => {
-  if (!(app.model.ui as any).metrics) {
-    (app.model.ui as any).metrics = [];
-  }
-  
-  (app.model.ui as any).metrics.push({
-    id: Math.random(),
-    isExpanded: true,
-    type: undefined,
-    intersection: 'CDR3ntVJ',
-    downsampling: {
-      type: 'none',
-      valueChooser: 'auto',
-    },
-  });
-};
-
-const getItemKey = (metric: MetricUI) => metric.id || JSON.stringify(metric);
-
-const isExpanded = (metric: MetricUI) => Boolean(metric.isExpanded);
 </script>
 
 <template>
   <PlDropdownRef
-    v-model="(app.model.args as any).abundanceRef" 
-    :options="(app.model.outputs as any).abundanceOptions ?? []"
+    v-model="app.model.args.abundanceRef"
+    :options="app.model.outputs.abundanceOptions ?? []"
     label="Abundance"
     required
     @update:model-value="setAbundanceRef"
   />
-  <PlElementList
-    v-if="(app.model.ui as any).metrics"
-    v-model:items="(app.model.ui as any).metrics"
-    :getItemKey="getItemKey"
-    :isExpandable="() => true"
-    :isExpanded="isExpanded"
-    :onExpand="handleExpand"
-    :isRemovable="() => true"
-    :onRemove="handleRemove"
-    :onSort="handleSort"
-  >
-    <template #item-title="{ item: metric }">
-      <div class="text-s-btn">
-        {{ metric.type ? getMetricLabel(metric.type) : 'New Metric' }}
-      </div>
-    </template>
 
+  <PlElementList
+    v-model:items="metrics"
+    :get-item-key="(item) => item.id"
+    :is-expanded="(item) => item.isExpanded === true"
+    :on-expand="(item) => item.isExpanded = !item.isExpanded"
+    :disable-dragging="true"
+  >
+    <template #item-title="{ item }">
+      {{ item.type ? getMetricLabel(item.type) : 'New Metric' }}
+    </template>
     <template #item-content="{ index }">
-      <DistanceCard
-        v-model="(app.model.ui as any).metrics[index]"
-      />
+      <DistanceCard v-model="metrics[index]" />
     </template>
   </PlElementList>
+
   <PlBtnSecondary icon="add" @click="addMetric">
     Add Metric
   </PlBtnSecondary>

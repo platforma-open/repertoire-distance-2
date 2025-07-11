@@ -1,19 +1,21 @@
-import type { InferOutputsType, PColumnIdAndSpec, PColumnSpec } from '@platforma-sdk/model';
+import type { InferOutputsType, PColumnIdAndSpec } from '@platforma-sdk/model';
 import { BlockModel, createPFrameForGraphs } from '@platforma-sdk/model';
 import type { BlockArgs, UiState } from './types';
-import { createDefaultUiState, convertMetricsUiToArgs } from './uiState';
+import { createDefaultUiState, createDefaultMetricUis } from './uiState';
 
 export * from './types';
 export * from './uiState';
 
 export const model = BlockModel.create()
   .withArgs<BlockArgs>({
-    metrics: convertMetricsUiToArgs(createDefaultUiState().metrics!),
+    metrics: createDefaultMetricUis(),
   })
 
   .withUiState<UiState>(createDefaultUiState())
 
-  .argsValid((ctx) => ctx.args.abundanceRef !== undefined)
+  .argsValid((ctx) =>
+    ctx.args.abundanceRef !== undefined,
+  )
 
   .output('abundanceOptions', (ctx) =>
     ctx.resultPool.getOptions([{
@@ -27,11 +29,12 @@ export const model = BlockModel.create()
         'pl7.app/abundance/isPrimary': 'true',
       },
     },
-    ], { includeNativeLabel: true }),
+    ], { includeNativeLabel: false }),
   )
 
   .output('pf', (ctx) => {
     const pCols = ctx.outputs?.resolve('pf')?.getPColumns();
+
     if (pCols === undefined) {
       return undefined;
     }
@@ -65,3 +68,4 @@ export const model = BlockModel.create()
   .done();
 
 export type BlockOutputs = InferOutputsType<typeof model>;
+
