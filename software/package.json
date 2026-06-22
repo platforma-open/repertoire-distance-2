@@ -8,14 +8,15 @@
   "scripts": {
     "build": "pl-pkg build",
     "prepublishOnly": "pl-pkg prepublish",
-    "do-pack": "rm -f *.tgz && pl-pkg build && pnpm pack && mv platforma-open*.tgz package.tgz",
+    "do-pack": "shx rm -f *.tgz && pl-pkg build && pnpm pack && shx mv platforma-open*.tgz package.tgz",
     "changeset": "changeset",
     "version-packages": "changeset version"
   },
   "dependencies": {},
   "devDependencies": {
     "@platforma-open/milaboratories.runenv-python-3": "catalog:",
-    "@platforma-sdk/package-builder": "catalog:"
+    "@platforma-sdk/package-builder": "catalog:",
+    "shx": "catalog:"
   },
   "block-software": {
     "entrypoints": {

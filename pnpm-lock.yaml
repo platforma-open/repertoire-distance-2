@@ -146,6 +146,9 @@ importers:
       '@platforma-sdk/package-builder':
         specifier: 'catalog:'
         version: 3.13.0
+      shx:
+        specifier: 'catalog:'
+        version: 0.4.0
 
   test:
     dependencies:
