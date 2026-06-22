@@ -1,6 +1,10 @@
 {
   "name": "@platforma-open/milaboratories.repertoire-distance-2.software",
   "version": "1.4.1",
+  "files": [
+    "./dist/**/*"
+  ],
+  "type": "module",
   "scripts": {
     "build": "pl-pkg build",
     "prepublishOnly": "pl-pkg prepublish",
@@ -8,13 +12,9 @@
     "changeset": "changeset",
     "version-packages": "changeset version"
   },
-  "files": [
-    "./dist/**/*"
-  ],
-  "dependencies": {
-    "@platforma-open/milaboratories.runenv-python-3": "catalog:"
-  },
+  "dependencies": {},
   "devDependencies": {
+    "@platforma-open/milaboratories.runenv-python-3": "catalog:",
     "@platforma-sdk/package-builder": "catalog:"
   },
   "block-software": {

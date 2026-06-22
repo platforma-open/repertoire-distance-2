@@ -1,23 +1,28 @@
 {
   "name": "@platforma-open/milaboratories.repertoire-distance-2",
   "version": "2.3.1",
-  "scripts": {
-    "pretty": "prettier --write \"./**/*.{js,jsx,mjs,cjs,ts,tsx,json,vue}\"",
-    "build": "rm -rf ./block-pack && block-tools pack",
-    "mark-stable": "block-tools mark-stable -r 's3://milab-euce1-prod-pkgs-s3-block-registry/pub/releases/?region=eu-central-1'",
-    "prepublishOnly": "block-tools pack && block-tools publish -r 's3://milab-euce1-prod-pkgs-s3-block-registry/pub/releases/?region=eu-central-1'",
-    "do-pack": "rm -f *.tgz && block-tools pack && pnpm pack && mv *.tgz package.tgz"
-  },
   "files": [
     "index.d.ts",
     "index.js"
   ],
-  "dependencies": {
-    "@platforma-sdk/model": "catalog:",
-    "@platforma-open/milaboratories.repertoire-distance-2.workflow": "workspace:*",
-    "@platforma-open/milaboratories.repertoire-distance-2.model": "workspace:*",
-    "@platforma-open/milaboratories.repertoire-distance-2.ui": "workspace:*"
+  "scripts": {
+    "pretty": "prettier --write \"./**/*.{js,jsx,mjs,cjs,ts,tsx,json,vue}\"",
+    "build": "shx rm -rf ./block-pack && block-tools pack",
+    "mark-stable": "block-tools mark-stable -r 's3://milab-euce1-prod-pkgs-s3-block-registry/pub/releases/?region=eu-central-1'",
+    "prepublishOnly": "block-tools pack && block-tools publish -r 's3://milab-euce1-prod-pkgs-s3-block-registry/pub/releases/?region=eu-central-1'",
+    "do-pack": "shx rm -f *.tgz && block-tools pack && pnpm pack && shx mv *.tgz package.tgz"
   },
+  "dependencies": {
+    "@platforma-open/milaboratories.repertoire-distance-2.model": "workspace:*",
+    "@platforma-open/milaboratories.repertoire-distance-2.ui": "workspace:*",
+    "@platforma-open/milaboratories.repertoire-distance-2.workflow": "workspace:*",
+    "@platforma-sdk/model": "catalog:"
+  },
+  "devDependencies": {
+    "@platforma-sdk/block-tools": "catalog:",
+    "shx": "catalog:"
+  },
+  "packageManager": "pnpm@9.14.4",
   "block": {
     "components": {
       "workflow": "@platforma-open/milaboratories.repertoire-distance-2.workflow/dist/tengo/tpl/main.plj.gz",
@@ -44,9 +49,5 @@
         "logo": "file:../logos/organization-logo.png"
       }
     }
-  },
-  "devDependencies": {
-    "@platforma-sdk/block-tools": "catalog:"
-  },
-  "packageManager": "pnpm@9.14.4"
+  }
 }

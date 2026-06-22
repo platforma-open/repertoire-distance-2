@@ -23,8 +23,7 @@
     "@milaboratories/ts-configs": "catalog:"
   },
   "peerDependencies": {
-    "typescript": "*",
-    "vite": "*",
-    "vitest": "*"
+    "@types/node": "*",
+    "typescript": "*"
   }
 }
