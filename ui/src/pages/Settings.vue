@@ -35,6 +35,20 @@ watch(
   { immediate: true },
 );
 
+// A block created from a template arrives with `abundanceRef` already set but
+// no label snapshot, which only the setter below writes. Take it from the
+// options as soon as they resolve, so the subtitle is right without the user
+// re-opening the picker.
+watch(
+  () => [app.model.data.abundanceRef, app.model.outputs.abundanceOptions] as const,
+  ([ref, options]) => {
+    if (!ref || app.model.data.datasetLabel !== undefined) return;
+    const label = options?.find((o) => plRefsEqual(o.ref, ref))?.label;
+    if (label !== undefined) app.model.data.datasetLabel = label;
+  },
+  { immediate: true },
+);
+
 const abundanceRefModel = computed({
   get: () => app.model.data.abundanceRef,
   set: (selectedRef: PlRef | undefined) => {

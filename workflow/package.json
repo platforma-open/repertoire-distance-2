@@ -1,6 +1,7 @@
 {
   "name": "@platforma-open/milaboratories.repertoire-distance-2.workflow",
   "version": "1.4.1",
+  "private": true,
   "description": "Block Workflow",
   "type": "module",
   "scripts": {

@@ -1,12 +1,12 @@
+import type { MetricUI } from "@platforma-open/milaboratories.repertoire-distance-2.kind";
 import { computed } from "vue";
-import type { Metric } from "@platforma-open/milaboratories.repertoire-distance-2.model";
 import { useApp } from "../app";
 
 export const useMetrics = () => {
   const app = useApp();
   const metrics = computed({
     get: () => app.model.data.metrics,
-    set: (newMetrics: Metric[]) => {
+    set: (newMetrics: MetricUI[]) => {
       app.model.data.metrics = newMetrics;
     },
   });

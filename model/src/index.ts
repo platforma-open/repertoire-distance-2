@@ -1,4 +1,6 @@
 import type { GraphMakerState } from "@milaboratories/graph-maker";
+import type { MetricUI } from "@platforma-open/milaboratories.repertoire-distance-2.kind";
+import { kind } from "@platforma-open/milaboratories.repertoire-distance-2.kind";
 import type { InferOutputsType, PColumnIdAndSpec } from "@platforma-sdk/model";
 import {
   BlockModelV3,
@@ -6,7 +8,7 @@ import {
   DataModelBuilder,
   isPColumnSpec,
 } from "@platforma-sdk/model";
-import type { BlockArgs, BlockData, LegacyBlockArgs, LegacyBlockUiState, Metric } from "./types";
+import type { BlockArgs, BlockData, LegacyBlockArgs, LegacyBlockUiState } from "./types";
 
 export * from "./types";
 
@@ -24,7 +26,7 @@ const defaultGraphState = (): GraphMakerState => ({
   },
 });
 
-export const createDefaultMetrics = (): Metric[] => [
+export const createDefaultMetrics = (): MetricUI[] => [
   {
     id: "f1-cdr3ntvj",
     type: "F1",
@@ -71,7 +73,7 @@ export const createDefaultMetrics = (): Metric[] => [
 
 // Peptide inputs have no V/J genes — sequence-only intersections only. Use
 // amino-acid sequences as the default (most common for peptide discovery).
-export const createPeptideMetrics = (): Metric[] => [
+export const createPeptideMetrics = (): MetricUI[] => [
   {
     id: "f1-cdr3aa",
     type: "F1",
@@ -126,7 +128,7 @@ function parseLegacyDatasetLabel(legacy: string | undefined): string | undefined
   return legacy.slice(LEGACY_TITLE_PREFIX.length).trim() || undefined;
 }
 
-const blockDataModel = new DataModelBuilder()
+const blockDataModel = new DataModelBuilder({ kind })
   .from<BlockData>("V20260519")
   .upgradeLegacy<LegacyBlockArgs, LegacyBlockUiState>(({ args, uiState }) => ({
     abundanceRef: args?.abundanceRef,
@@ -138,15 +140,20 @@ const blockDataModel = new DataModelBuilder()
     lastAppliedModality: "antibody_tcr",
     graphState: uiState?.graphState ?? defaultGraphState(),
   }))
-  .init(() => ({
-    abundanceRef: undefined,
-    metrics: createDefaultMetrics(),
-    customBlockLabel: "",
+  // A block created from a template starts on the params its kind accepted;
+  // one created by hand gets the default metric set and an unpicked input.
+  // `datasetLabel` stays unset either way — the UI snapshots it from the
+  // dataset options once they resolve.
+  .init(({ params }) => ({
+    abundanceRef: params?.abundanceRef,
+    metrics: params?.metrics ?? createDefaultMetrics(),
+    lastAppliedModality: params?.lastAppliedModality,
+    customBlockLabel: params?.customBlockLabel ?? "",
     datasetLabel: undefined,
     graphState: defaultGraphState(),
   }));
 
-export const platforma = BlockModelV3.create(blockDataModel)
+export const platforma = BlockModelV3.create({ dataModel: blockDataModel, kind })
 
   .args<BlockArgs>((data) => {
     if (data.abundanceRef === undefined) throw new Error("Abundance dataset is required");
@@ -168,6 +175,17 @@ export const platforma = BlockModelV3.create(blockDataModel)
       })),
     };
   })
+
+  // Inverse of the kind's init-params contract. `lastAppliedModality` travels
+  // with `metrics` because it is what stops the UI from reseeding the list on
+  // the applied input. `datasetLabel` is re-snapshotted from the dataset
+  // options, and `graphState` is heatmap view state.
+  .templateParams((data) => ({
+    abundanceRef: data.abundanceRef,
+    metrics: data.metrics,
+    lastAppliedModality: data.lastAppliedModality,
+    customBlockLabel: data.customBlockLabel,
+  }))
 
   .output("abundanceOptions", (ctx) =>
     ctx.resultPool.getOptions(

@@ -1,26 +1,18 @@
 import type { GraphMakerState } from "@milaboratories/graph-maker";
+// The metric vocabulary lives in the kind: its init-params contract names these
+// types and a kind cannot import from the model. Imported here for the shapes
+// below that are built from them.
+import type {
+  Metric,
+  MetricUI,
+  Modality,
+} from "@platforma-open/milaboratories.repertoire-distance-2.kind";
 import type { PlRef } from "@platforma-sdk/model";
-
-export type DistanceType = "F1" | "F2" | "D" | "sharedClonotypes" | "correlation" | "jaccard";
-
-export type IntersectionType = "CDR3ntVJ" | "CDR3aaVJ" | "CDR3nt" | "CDR3aa";
-
-export type Metric = {
-  id: string;
-  type: DistanceType | undefined;
-  intersection: IntersectionType | undefined;
-  downsampling: {
-    type?: "none" | "top" | "cumtop" | "hypergeometric";
-    valueChooser?: "min" | "fixed" | "max" | "auto";
-    n?: number;
-  };
-  isExpanded?: boolean;
-};
 
 /** Unified V3 data: persisted state shaped on the UI's terms. */
 export type BlockData = {
   abundanceRef?: PlRef;
-  metrics: Metric[];
+  metrics: MetricUI[];
   customBlockLabel: string;
   /**
    * Human-readable label of the chosen abundance dataset, snapshotted by the
@@ -35,7 +27,7 @@ export type BlockData = {
    * undefined on first input — the watcher treats that as a one-time adoption
    * pass so legacy V1 → V3 upgrades don't lose user-customized metrics.
    */
-  lastAppliedModality?: "antibody_tcr" | "peptide";
+  lastAppliedModality?: Modality;
   graphState: GraphMakerState;
 };
 
@@ -44,13 +36,13 @@ export type BlockArgs = {
   abundanceRef: PlRef;
   // `isExpanded` is UI-only and deliberately excluded so toggling a metric
   // section doesn't change args (and re-activate the Run button).
-  metrics: Omit<Metric, "isExpanded">[];
+  metrics: Metric[];
 };
 
 /** Pre-V3 args shape, frozen snapshot for `upgradeLegacy`. */
 export type LegacyBlockArgs = {
   abundanceRef?: PlRef;
-  metrics: Metric[];
+  metrics: MetricUI[];
 };
 
 /** Pre-V3 UI state shape, frozen snapshot for `upgradeLegacy`. */
