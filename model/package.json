@@ -1,6 +1,6 @@
 {
   "name": "@platforma-open/milaboratories.repertoire-distance-2.model",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "private": true,
   "description": "Block model",
   "type": "module",
