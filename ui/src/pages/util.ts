@@ -1,9 +1,8 @@
 import type {
   DistanceType,
   IntersectionType,
-} from "@platforma-open/milaboratories.repertoire-distance-2.model";
-
-export type Modality = "antibody_tcr" | "peptide";
+  Modality,
+} from "@platforma-open/milaboratories.repertoire-distance-2.kind";
 
 export function getMetricLabel(type: DistanceType, modality?: Modality): string {
   switch (type) {

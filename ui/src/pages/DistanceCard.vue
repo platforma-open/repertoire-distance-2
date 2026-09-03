@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Metric } from "@platforma-open/milaboratories.repertoire-distance-2.model";
+import type { MetricUI } from "@platforma-open/milaboratories.repertoire-distance-2.kind";
 import type { ListOption } from "@platforma-sdk/ui-vue";
 import { PlBtnGroup, PlDropdown, PlNumberField } from "@platforma-sdk/ui-vue";
 import { computed } from "vue";
@@ -43,7 +43,7 @@ const downsamplingOptions: ListOption<string | undefined>[] = [
   { label: "Random Sampling", value: "hypergeometric" },
 ];
 
-const props = defineModel<Metric>({
+const props = defineModel<MetricUI>({
   required: true,
   default: {
     type: undefined,

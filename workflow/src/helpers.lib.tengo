@@ -17,6 +17,14 @@ export {
 		return mt
 	},
 
+	// The two sample axes keep the plain `pl7.app/sampleId` domain of the input,
+	// and the side of the pair each one stands for goes into `contextDomain`.
+	// `domain` is matched by exact equality, so a side marker there would leave
+	// both axes unequal to the `pl7.app/sampleId` every other block emits and no
+	// sample metadata would ever attach to the heatmap. `contextDomain` is
+	// matched by kinship, so the axes stay canonical while still carrying the
+	// marker. The model folds it back into `domain` when it builds the PFrame,
+	// where axes are joined by exact domain and the two sides must stay apart.
 	getFullSpecs: func(abundanceSpec, metrics) {
 		return {
 			axes: [{
@@ -24,12 +32,10 @@ export {
 				spec: {
 					name: "pl7.app/sampleId",
 					type: "String",
-					domain: maps.merge(
-						abundanceSpec.axesSpec[0].domain,
-						{
-							"pl7.app/overlap": "left"
-						}
-					),
+					domain: abundanceSpec.axesSpec[0].domain,
+					contextDomain: {
+						"pl7.app/overlap": "left"
+					},
 					annotations: {
 						"pl7.app/label": "Sample 1"
 					}
@@ -40,12 +46,10 @@ export {
 				spec: {
 					name: "pl7.app/sampleId",
 					type: "String",
-					domain: maps.merge(
-						abundanceSpec.axesSpec[0].domain,
-						{
-							"pl7.app/overlap": "right"
-						}
-					),
+					domain: abundanceSpec.axesSpec[0].domain,
+					contextDomain: {
+						"pl7.app/overlap": "right"
+					},
 					annotations: {
 						"pl7.app/label": "Sample 2"
 					}

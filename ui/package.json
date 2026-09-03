@@ -1,6 +1,7 @@
 {
   "name": "@platforma-open/milaboratories.repertoire-distance-2.ui",
   "version": "1.5.1",
+  "private": true,
   "type": "module",
   "scripts": {
     "fmt": "ts-builder format",
@@ -12,6 +13,7 @@
   "dependencies": {
     "@milaboratories/graph-maker": "catalog:",
     "@milaboratories/helpers": "catalog:",
+    "@platforma-open/milaboratories.repertoire-distance-2.kind": "workspace:*",
     "@platforma-open/milaboratories.repertoire-distance-2.model": "workspace:*",
     "@platforma-sdk/model": "catalog:",
     "@platforma-sdk/ui-vue": "catalog:",
@@ -23,8 +25,7 @@
     "@milaboratories/ts-configs": "catalog:"
   },
   "peerDependencies": {
-    "typescript": "*",
-    "vite": "*",
-    "vitest": "*"
+    "@types/node": "*",
+    "typescript": "*"
   }
 }
