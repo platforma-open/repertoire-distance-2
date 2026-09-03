@@ -275,7 +275,22 @@ export const platforma = BlockModelV3.create({ dataModel: blockDataModel, kind }
       (c) =>
         ({
           columnId: c.id,
-          spec: c.spec,
+          spec: {
+            ...c.spec,
+            domain: {
+              ...c.spec.domain,
+              ...c.spec.contextDomain,
+            },
+            axesSpec: c.spec.axesSpec.map((axis) => {
+              return {
+                ...axis,
+                domain: {
+                  ...axis.domain,
+                  ...axis.contextDomain,
+                },
+              };
+            }),
+          },
         }) satisfies PColumnIdAndSpec,
     );
   })
