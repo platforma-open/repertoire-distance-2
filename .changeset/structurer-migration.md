@@ -2,7 +2,7 @@
 "@platforma-open/milaboratories.repertoire-distance-2": minor
 "@platforma-open/milaboratories.repertoire-distance-2.model": minor
 "@platforma-open/milaboratories.repertoire-distance-2.ui": minor
-"@platforma-open/milaboratories.repertoire-distance-2.workflow": patch
+"@platforma-open/milaboratories.repertoire-distance-2.workflow": minor
 "@platforma-open/milaboratories.repertoire-distance-2.software": patch
 ---
 
@@ -19,3 +19,9 @@ the options when the block arrives with an input already chosen.
 The metric vocabulary (`DistanceType`, `IntersectionType`, `Metric`) moved into
 the kind package, which the model and UI import from. The persisted shape is
 unchanged and the model was already on BlockModelV3.
+
+The side of the pair each sample axis stands for moved from its `domain` to its
+`contextDomain`, so both axes stay equal to the plain `pl7.app/sampleId` other
+blocks emit and sample metadata can reach the heatmap. The model folds the
+marker back into `domain` when it builds the PFrame, where axes are joined by
+exact domain and the two sides must stay apart.
